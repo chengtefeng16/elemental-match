@@ -1,0 +1,1108 @@
+<title>Elemental Match</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&text=%E7%94%B2%E4%B9%99%E4%B8%99%E4%B8%81%E6%88%8A%E5%B7%B1%E5%BA%9A%E8%BE%9B%E5%A3%AC%E7%99%B8%E5%AD%90%E4%B8%91%E5%AF%85%E5%8D%AF%E8%BE%B0%E5%B7%B3%E5%8D%88%E6%9C%AA%E7%94%B3%E9%85%89%E6%88%8C%E4%BA%A5%E6%9C%A8%E7%81%AB%E5%9C%9F%E9%87%91%E6%B0%B4%E5%90%88&display=swap">
+<style>
+/* Layout: a dark void with a slow-turning bagua ring behind the title. Characters are dealt as talisman-paper cards
+   (yellow, halftone, zigzag edges, red stamp). Dark HUD panels hold the stats. The side quest is a dashed quest-board panel.
+   Single look by choice: purple-black ground, talisman yellow, cinnabar red, five neon element colors. Glitch magenta/cyan only on the title. */
+:root{
+  --void:#0A0710; --void2:#150E20; --void3:#1F1530; --line:#3A2B52;
+  --fg:#F4EFE6; --muted:#A79CBC;
+  --paper:#EFD04A; --ink:#1B1209; --ink-soft:#4C3B10;
+  --seal:#E5362F; --seal-ink:#A5201A; --on-seal:#FFF6E8;
+  --wood:#38F2A0; --fire:#FF5A36; --earth:#F2B134; --metal:#C9D6E8; --water:#3D8BFF;
+  --glitch-a:#FF2E93; --glitch-b:#29E3F5; --focus:#29E3F5; --warn:#FF6B5E;
+  --font-display:'Dela Gothic One','Arial Black','Helvetica Neue',Arial,sans-serif;
+  --font-mono:'Space Mono','SFMono-Regular',Menlo,Consolas,monospace;
+  --font-body:'Hanken Grotesk','Avenir Next','Helvetica Neue',Arial,sans-serif;
+  --font-han:'Ma Shan Zheng','Kaiti SC','STKaiti','KaiTi','Noto Serif CJK SC',serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+::selection{background:var(--seal); color:var(--on-seal)}
+body{
+  background:var(--void); color:var(--fg);
+  font:400 16px/1.55 var(--font-body);
+  padding-block:18px 64px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  overflow-x:clip;
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:50; opacity:.08;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.wrap{max-width:700px; margin-inline:auto; display:flex; flex-direction:column; gap:44px}
+h1,h2,h3,p{margin:0}
+button,input{font:inherit; color:inherit}
+:focus-visible{outline:3px solid var(--focus); outline-offset:3px}
+
+/* top bar */
+.brand{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+.brand .l{display:flex; align-items:center; gap:10px}
+.brand .mark{width:32px; height:32px; display:grid; place-items:center; background:var(--seal); color:var(--on-seal); transform:rotate(-5deg); font:400 22px/1 var(--font-han); box-shadow:3px 3px 0 var(--paper)}
+.brand b{font:400 1rem var(--font-display); letter-spacing:.02em; text-transform:uppercase}
+.st{font:700 .72rem var(--font-mono); letter-spacing:.16em; color:var(--paper); text-transform:uppercase}
+.st::after{content:"_"; animation:blink 1s steps(1) infinite}
+.brand .r{display:flex; align-items:center; flex-wrap:wrap; gap:10px 12px}
+.snd{display:inline-flex; align-items:center; gap:8px; min-height:40px; padding:0 12px; background:transparent; color:var(--fg); border:2px solid var(--fg); font:700 .72rem var(--font-mono); letter-spacing:.12em; text-transform:uppercase; cursor:pointer}
+.snd:hover{border-color:var(--paper); color:var(--paper)}
+.snd[aria-pressed="true"]{background:var(--paper); color:var(--ink); border-color:var(--paper)}
+.snd .eq{display:inline-flex; align-items:flex-end; gap:2px; height:12px}
+.snd .eq b{display:block; width:3px; height:4px; background:currentColor}
+.snd[aria-pressed="true"] .eq b{animation:eq .7s ease-in-out infinite alternate}
+.snd[aria-pressed="true"] .eq b:nth-child(2){animation-delay:.15s}
+.snd[aria-pressed="true"] .eq b:nth-child(3){animation-delay:.3s}
+@keyframes eq{from{height:3px} to{height:12px}}
+@keyframes blink{50%{opacity:0}}
+
+/* hero */
+.hero{position:relative; display:flex; flex-direction:column; gap:16px}
+.ring{position:absolute; right:0; top:-26px; width:min(100%,520px); aspect-ratio:1; overflow:hidden; color:var(--paper); opacity:.2; pointer-events:none; z-index:0}
+.ring svg{width:100%; height:100%; animation:spin 160s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hero > *:not(.ring){position:relative; z-index:1}
+.hero h1{
+  font:400 clamp(1.7rem,7.6vw,3.3rem)/1.05 var(--font-display); text-transform:uppercase; text-wrap:balance;
+  text-shadow:2px 0 rgba(255,46,147,.6), -2px 0 rgba(41,227,245,.6);
+  animation:glitch 7s steps(1) infinite;
+}
+@keyframes glitch{
+  0%,90%,100%{transform:none; text-shadow:2px 0 rgba(255,46,147,.6), -2px 0 rgba(41,227,245,.6)}
+  91%{transform:translateX(-3px) skewX(-4deg); text-shadow:6px 0 var(--glitch-a), -6px 0 var(--glitch-b)}
+  93%{transform:translateX(3px); text-shadow:-5px 0 var(--glitch-a), 5px 0 var(--glitch-b)}
+  95%{transform:none; text-shadow:2px 0 rgba(255,46,147,.6), -2px 0 rgba(41,227,245,.6)}
+}
+.sub{color:var(--muted); font-size:1.04rem; max-width:50ch}
+
+/* form */
+form{display:flex; flex-direction:column; gap:22px; margin-top:8px}
+fieldset{margin:0; min-width:0; border:2px solid var(--paper); background:var(--void2); padding:20px 16px 16px; box-shadow:5px 5px 0 var(--seal); display:flex; flex-direction:column; gap:12px}
+legend{font:700 .75rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; background:var(--paper); color:var(--ink); padding:4px 10px; margin-left:-2px}
+.hint{font:400 .8rem var(--font-mono); color:var(--muted)}
+.row{display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:12px}
+label{display:flex; flex-direction:column; gap:6px; font:700 .68rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); min-width:0}
+input[type=date], input[type=time], input[type=email]{
+  background:#0B0713; border:2px solid var(--line); border-radius:0; padding:0 12px; min-height:48px; width:100%;
+  color:var(--fg); font:500 1rem var(--font-mono); text-transform:none; letter-spacing:0;
+}
+input:hover{border-color:var(--muted)}
+input:focus-visible{border-color:var(--paper)}
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:52px; padding:0 22px;
+  border:2px solid var(--paper); background:var(--paper); color:var(--ink);
+  font:700 .88rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase; cursor:pointer;
+  box-shadow:4px 4px 0 var(--seal); transition:transform .08s, box-shadow .08s;
+}
+.btn:hover{transform:translate(-1px,-1px); box-shadow:5px 5px 0 var(--seal)}
+.btn:active{transform:translate(3px,3px); box-shadow:1px 1px 0 var(--seal)}
+.btn:disabled{opacity:.55; cursor:default; transform:none; box-shadow:none}
+.btn.ghost{background:transparent; color:var(--fg); border-color:var(--fg); box-shadow:none}
+.btn.ghost:hover{background:var(--fg); color:var(--void); transform:none}
+.btn.sm{min-height:44px; padding:0 16px; font-size:.76rem}
+#go::before{content:"\25B6"; font-size:.8em}
+.btn-row{display:flex; gap:12px; flex-wrap:wrap}
+.err{color:var(--warn); font:700 .85rem var(--font-mono)}
+.fine{font:400 .78rem/1.5 var(--font-mono); color:var(--muted); max-width:62ch}
+
+/* results */
+.result{display:flex; flex-direction:column; gap:30px}
+.sample-tag{align-self:flex-start; font:700 .72rem var(--font-mono); letter-spacing:.08em; text-transform:uppercase; border:2px dashed var(--paper); color:var(--paper); padding:5px 12px}
+.stage{display:flex; align-items:center; gap:12px; font:700 .72rem var(--font-mono); letter-spacing:.16em; text-transform:uppercase; color:var(--paper)}
+.stage::after{content:""; flex:1; height:2px; opacity:.6; background:repeating-linear-gradient(90deg, var(--paper) 0 8px, transparent 8px 14px)}
+
+/* talisman card */
+.card{
+  position:relative; display:flex; flex-direction:column; gap:20px; padding:32px 18px 30px; color:var(--ink);
+  background-color:var(--paper); background-image:radial-gradient(rgba(27,18,9,.15) 1px, transparent 1.3px); background-size:7px 7px;
+  box-shadow:6px 6px 0 var(--seal); animation:deal .55s cubic-bezier(.2,.9,.3,1.15) both;
+}
+.card + .card{animation-delay:.12s}
+.card::before, .card::after{content:""; position:absolute; left:0; right:0; height:10px; background-repeat:repeat-x}
+.card::before{top:0; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='10'%3E%3Cpolygon points='0,0 20,0 10,10' fill='%230A0710'/%3E%3C/svg%3E")}
+.card::after{bottom:0; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='10'%3E%3Cpolygon points='0,10 20,10 10,0' fill='%230A0710'/%3E%3C/svg%3E")}
+@keyframes deal{from{opacity:0; transform:translateY(16px) rotate(1.2deg)} to{opacity:1; transform:none}}
+.hdr{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap}
+.tagline{font:700 .72rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; background:var(--ink); color:var(--paper); padding:4px 9px}
+.sticker{font:700 .72rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase; border:2px solid var(--ink); padding:3px 8px; transform:rotate(2deg)}
+.ident{display:flex; gap:16px; align-items:center}
+.seal{
+  flex:none; width:96px; height:96px; display:grid; place-items:center; padding-bottom:6px; background:var(--seal); color:var(--on-seal);
+  font:400 72px/1 var(--font-han); transform:rotate(-5deg);
+  box-shadow:inset 0 0 0 3px var(--seal), inset 0 0 0 5px rgba(255,246,232,.75), 4px 4px 0 var(--ink);
+  animation:stamp .5s .25s cubic-bezier(.2,.9,.3,1.3) both;
+}
+@keyframes stamp{from{transform:rotate(-5deg) scale(1.6); opacity:0} to{transform:rotate(-5deg) scale(1); opacity:1}}
+.ident h2{font:400 clamp(1.45rem,6vw,2.1rem)/1.04 var(--font-display); text-transform:uppercase}
+.nm-sub{font:700 .76rem var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px}
+.essence{font-size:1.08rem; font-weight:500}
+
+.pillars{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px}
+.pillar{display:flex; flex-direction:column; gap:4px; min-width:0}
+.pillar .cap{font:700 .6rem var(--font-mono); letter-spacing:.08em; text-transform:uppercase; text-align:center; color:var(--ink-soft); padding:2px 0}
+.pillar.dm .cap{background:var(--seal-ink); color:#fff}
+.tile{height:64px; display:grid; place-items:center; padding-bottom:4px; background:var(--ink); color:var(--c); font:400 2.3rem/1 var(--font-han); text-shadow:0 0 14px color-mix(in srgb, var(--c) 55%, transparent)}
+.tile.br{height:50px; font-size:1.7rem; background:#2B2013}
+.pillar.dm .tile:not(.br){box-shadow:0 0 0 3px var(--seal-ink)}
+.tile.unk{background:transparent; border:2px dashed var(--ink-soft); color:var(--ink-soft); text-shadow:none; font:700 1.1rem var(--font-mono)}
+
+.hud{background:var(--ink); color:var(--fg); padding:14px 12px; display:flex; flex-direction:column; gap:12px}
+.hud-t{display:flex; justify-content:space-between; font:700 .66rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--paper)}
+.bars{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px}
+.bar{display:grid; grid-template-columns:5.4rem minmax(0,1fr) 1.3rem; align-items:center; gap:10px}
+.bar .el{display:flex; align-items:baseline; gap:7px; font:700 .78rem var(--font-mono); letter-spacing:.05em; text-transform:uppercase}
+.bar .el .han{font:400 1.3rem/1 var(--font-han); color:var(--c)}
+.pips{display:flex; gap:4px; min-width:0; justify-self:start; width:min(100%, calc(var(--n,8) * 26px))}
+.pip{flex:1 1 0; min-width:0; height:16px; background:#2E2240}
+.pip.on{background:var(--c); box-shadow:0 0 10px color-mix(in srgb, var(--c) 70%, transparent); animation:pip .35s both; animation-delay:calc(var(--r, 0) * 220ms + var(--i) * 60ms + .9s)}
+@keyframes pip{from{opacity:0; transform:scaleY(.2)} to{opacity:1; transform:none}}
+.bar .n{font:700 .9rem var(--font-mono); text-align:right; font-variant-numeric:tabular-nums}
+.bar.thin .pips{outline:2px dashed var(--warn); outline-offset:3px}
+.bar.thin .n{color:var(--warn)}
+.weak{display:flex; gap:10px; align-items:center; flex-wrap:wrap; font:700 .72rem var(--font-mono); letter-spacing:.06em; text-transform:uppercase}
+.weak b{background:var(--warn); color:var(--ink); padding:2px 8px}
+
+.bd{display:grid; grid-template-columns:repeat(auto-fit, minmax(230px,1fr)); gap:16px}
+.bd h3{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:5px; font:700 .72rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase}
+.bd h3 i, .pair-two h3 i{font-style:normal; background:var(--ink); color:var(--paper); padding:2px 8px}
+.bd h3 i.bad, .pair-two h3 i.bad{background:var(--seal-ink); color:#fff}
+.bd .loud{grid-column:1/-1}
+
+/* pairing card */
+.pair-seals{display:flex; align-items:center; gap:16px}
+.pair-seals .seal{width:72px; height:72px; font-size:52px; animation:none}
+.pair-seals .x{font:400 1.6rem var(--font-display)}
+.card h2.big{font:400 clamp(1.6rem,6.4vw,2.4rem)/1.04 var(--font-display); text-transform:uppercase}
+.pair-two{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:16px}
+.pair-two h3{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:5px; font:700 .72rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase}
+.gap{background:var(--ink); color:var(--fg); border-left:6px solid var(--c, var(--seal)); padding:12px 14px; display:flex; flex-direction:column; gap:4px}
+.gap-t{font:700 .66rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--paper)}
+.pact-t{font:700 .72rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase; margin-bottom:8px}
+.pair-rules{margin:0; padding:0; list-style:none; counter-reset:r; display:flex; flex-direction:column; gap:10px}
+.pair-rules li{counter-increment:r; display:grid; grid-template-columns:28px minmax(0,1fr); gap:10px; align-items:start}
+.pair-rules li::before{content:counter(r); display:grid; place-items:center; height:28px; background:var(--ink); color:var(--paper); font:700 .8rem var(--font-mono)}
+.card .btn{background:var(--ink); color:var(--paper); border-color:var(--ink); box-shadow:4px 4px 0 var(--seal-ink)}
+.card .btn:hover{box-shadow:5px 5px 0 var(--seal-ink)}
+.card .btn:active{box-shadow:1px 1px 0 var(--seal-ink)}
+
+/* dark panels: quest, next step, locked */
+.panel{background:var(--void2); border:2px solid var(--paper); padding:20px 18px; display:flex; flex-direction:column; gap:14px}
+.panel.quest{border-style:dashed; box-shadow:6px 6px 0 var(--void3)}
+.panel h2{font:400 clamp(1.3rem,5vw,1.8rem)/1.08 var(--font-display); text-transform:uppercase}
+.kicker{display:flex; align-items:center; gap:10px; flex-wrap:wrap; font:700 .72rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--paper)}
+.kicker b{background:var(--seal); color:var(--on-seal); padding:2px 8px}
+.panel .act{font-size:1.05rem}
+.panel .why, .panel .ask{color:var(--muted)}
+.panel .why b, .panel .ask b{color:var(--fg)}
+.log{display:flex; flex-direction:column; gap:12px}
+.xp{display:flex; justify-content:space-between; gap:10px; font:700 .72rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--paper)}
+.xpbar{position:relative; height:10px; background:#2E2240}
+.xpfill{position:absolute; inset:0 auto 0 0; width:calc(var(--p, 0) * 1%); background:var(--c); box-shadow:0 0 12px var(--c); transition:width .4s}
+.dots{display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:6px; max-width:340px}
+.dot{aspect-ratio:1; max-height:44px; display:grid; place-items:center; border:2px solid var(--muted); background:transparent; font-style:normal}
+.dot::before{content:attr(data-n); font:700 .75rem var(--font-mono); color:var(--muted)}
+.dot.on{background:var(--c); border-color:var(--c); box-shadow:0 0 10px color-mix(in srgb, var(--c) 70%, transparent)}
+.dot.on::before{color:var(--ink)}
+.msg{font:700 .78rem var(--font-mono); color:var(--muted); letter-spacing:.04em}
+
+.share{display:flex; flex-direction:column; gap:14px}
+.share-img{max-width:min(100%,360px); display:block; border:2px solid var(--paper); box-shadow:5px 5px 0 var(--seal)}
+.fallback{width:100%; min-height:110px; background:var(--void2); border:2px solid var(--line); padding:10px; font:400 .85rem var(--font-mono); color:var(--fg)}
+
+.locked{border:2px solid var(--line); background:repeating-linear-gradient(135deg, #150E20 0 10px, #19102A 10px 20px); padding:20px 18px; display:flex; flex-direction:column; gap:12px}
+.locked h2{font:400 clamp(1.25rem,5vw,1.7rem)/1.1 var(--font-display); text-transform:uppercase}
+.locked p{color:var(--muted); max-width:56ch}
+.locked .kicker b{background:var(--muted); color:var(--void)}
+.waitlist{display:flex; flex-direction:column; gap:10px}
+.waitlist .rowf{display:flex; gap:12px; flex-wrap:wrap}
+.waitlist input[type=email]{flex:1 1 220px; min-width:0}
+
+footer{display:flex; flex-direction:column; gap:10px; border-top:2px dashed var(--line); padding-top:18px}
+footer p{font:400 .78rem/1.55 var(--font-mono); color:var(--muted); max-width:70ch}
+footer p b{color:var(--fg)}
+.preview-switch a{color:var(--paper)}
+
+/* unlock preview */
+.pv{display:flex; flex-direction:column; gap:14px; padding-top:6px; border-top:2px dashed var(--line)}
+.pv h3{font:700 .72rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--paper)}
+.pv .say{border:2px dashed var(--line); padding:12px 14px; color:var(--fg)}
+.pv .say span{display:block; font:700 .66rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--paper); margin-bottom:4px}
+.pv ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px}
+.pv ul.q li{display:grid; grid-template-columns:20px minmax(0,1fr); gap:6px}
+.pv ul.q li::before{content:"\25B8"; color:var(--paper)}
+.pv .cells{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px}
+.pv .cell{background:var(--void); border-left:6px solid var(--c, var(--paper)); padding:10px 12px; display:flex; flex-direction:column; gap:3px}
+.pv .cell b{font:700 .66rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--paper)}
+.pv ul.lk li{display:flex; gap:10px; align-items:center; padding:10px 12px; border:2px solid var(--line); color:var(--muted)}
+.pv ul.lk li::before{content:"\1F512"; font-size:.9rem}
+@media (max-width:420px){
+  .st{display:none}
+  .brand b{font-size:.82rem}
+  .snd{padding:0 8px; gap:6px; letter-spacing:.04em; font-size:.66rem}
+  .brand .l{gap:8px}
+  .seal{width:80px; height:80px; font-size:60px}
+  .bar{grid-template-columns:4.9rem minmax(0,1fr) 1.2rem; gap:8px}
+  .card{padding-inline:14px}
+  .panel, .locked{padding-inline:14px}
+  .row{grid-template-columns:1fr}
+}
+/* Chinese: swap in a CJK display/body stack (loaded only when needed) */
+:root[data-lang="zh"]{
+  --font-display:'Noto Sans SC','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  --font-mono:'Space Mono','Noto Sans SC','PingFang SC','Microsoft YaHei',monospace;
+  --font-body:'Hanken Grotesk','Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+}
+:root[data-lang="zh"] :is(.brand b,.hero h1,.ident h2,.card h2.big,.panel h2,.locked h2,.pair-seals .x){font-weight:900}
+:root[data-lang="zh"] :is(.hero h1,.ident h2,.card h2.big,.panel h2,.locked h2){line-height:1.25}
+:root[data-lang="zh"] *{letter-spacing:.04em!important}
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{animation:none!important; transition:none!important}
+}
+</style>
+
+<div class="wrap">
+  <div class="brand">
+    <div class="l"><span class="mark" lang="zh" aria-hidden="true">合</span><b>Elemental Match</b></div>
+    <div class="r"><span class="st" data-i="start">Press start</span><button class="snd" id="lang" type="button" aria-label="Language / 语言"><span id="langl">中文</span></button><button class="snd" id="snd" type="button" aria-pressed="false"><i class="eq" aria-hidden="true"><b></b><b></b><b></b></i><span id="sndl">Sound off</span></button></div>
+  </div>
+
+  <header class="hero">
+    <div class="ring" id="ring" aria-hidden="true"></div>
+    <h1 id="h1"></h1>
+    <p class="sub" id="sub"></p>
+    <form id="f" novalidate>
+      <fieldset>
+        <legend id="lg1">Player 1</legend>
+        <div class="row">
+          <label for="d1"><span data-i="dob">Date of birth</span><input id="d1" type="date" min="1920-01-01" autocomplete="bday"></label>
+          <label for="t1"><span data-i="tob">Time of birth (optional)</span><input id="t1" type="time"></label>
+        </div>
+      </fieldset>
+      <fieldset data-only="partner">
+        <legend data-i="lg2">Player 2 · Your partner</legend>
+        <p class="hint" data-i="hint_opt">Optional. You can add this later.</p>
+        <div class="row">
+          <label for="d2"><span data-i="dob">Date of birth</span><input id="d2" type="date" min="1920-01-01"></label>
+          <label for="t2"><span data-i="tob">Time of birth (optional)</span><input id="t2" type="time"></label>
+        </div>
+      </fieldset>
+      <div><button class="btn" type="submit" id="go"></button></div>
+      <p class="err" id="err" role="alert" hidden></p>
+      <p class="fine" data-i="fine">Your birth details are calculated in your browser and are never sent anywhere. Don't know the time? Leave it empty and the hour pillar is skipped.</p>
+    </form>
+  </header>
+
+  <main id="out" class="result" aria-live="polite"></main>
+
+  <footer>
+    <p class="preview-switch" id="switch" hidden></p>
+    <p data-ih="foot1"><b>For entertainment and self-reflection.</b> These readings describe tendencies and don't predict events. They are not medical, legal, financial or life-span advice, and must not be used to screen, hire or judge people. Intended for adults 18 and over.</p>
+    <p data-i="foot2">Method: the four pillars come from the classical Chinese calendar (year changes at Start of Spring, month at the solar terms). The time you enter is used as is, with no birthplace correction, and 23:00 to 23:59 counts as the same day. The element balance is a simple count of the eight characters, so treat it as a game board, not a verdict.</p>
+  <p data-ih="foot3"><b>Privacy.</b> Birth details are calculated in your browser and never sent. We record anonymous page events (which button was used, which ad you came from) and, only if you join the waiting list, your email.</p>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
+<script>
+/* ===== 配置：部署到你自己的域名后，把下面三项填上 ===== */
+var CONFIG = {
+  shareUrl: '',          // 分享文案里的链接；留空则用当前页面地址
+  endpoint: '',          // 填 Google Apps Script 网页应用地址：埋点和邮箱都发到这里（见测试手册）
+  waitlistEndpoint: '',  // 等候名单接收地址（如 Formspree / Google Apps Script），收 POST JSON {email, variant}
+  eventEndpoint: ''      // 埋点接收地址；留空则只推送到 window.dataLayer（GTM / GA4 可读）
+};
+
+/* ===== 数据：五行 ===== */
+var ORDER = ['wood','fire','earth','metal','water'];
+var GEN = {wood:'fire', fire:'earth', earth:'metal', metal:'water', water:'wood'};   // 生
+var CTL = {wood:'earth', earth:'water', water:'fire', fire:'metal', metal:'wood'};   // 克
+var STEM = {'甲':['wood',1],'乙':['wood',0],'丙':['fire',1],'丁':['fire',0],'戊':['earth',1],'己':['earth',0],'庚':['metal',1],'辛':['metal',0],'壬':['water',1],'癸':['water',0]};
+var BRANCH = {'子':'water','丑':'earth','寅':'wood','卯':'wood','辰':'earth','巳':'fire','午':'fire','未':'earth','申':'metal','酉':'metal','戌':'earth','亥':'water'};
+
+var EL = {
+  wood:{han:'木', name:'Wood', css:'var(--wood)', hex:'#38F2A0',
+    loud:'Drive and growth. You push things forward, so watch for starting more than you finish.',
+    quest:{title:'Start small and put a date on it',
+      founder:'Write down the one thing you would start this quarter if nobody could stop you. Send it to one person and book the date of the first step.',
+      general:'Name one thing you keep waiting to start. Do the first 10 minutes of it today, then book the next step in your calendar.',
+      why:'A small first step with a date attached turns a wish into a plan.',
+      ask:'What am I waiting for permission to begin?'}},
+  fire:{han:'火', name:'Fire', css:'var(--fire)', hex:'#FF5A36',
+    loud:'Energy and visibility. People feel you in the room, so watch for promising more than you can carry.',
+    quest:{title:'Show one thing before it is ready',
+      founder:'Share one unfinished piece of work with someone outside your team and ask what they notice first.',
+      general:'Tell one person, out loud, about something you are working on or proud of.',
+      why:'Saying it aloud makes progress real to you and gives other people a way to help.',
+      ask:'Who does not know what I am working on yet?'}},
+  earth:{han:'土', name:'Earth', css:'var(--earth)', hex:'#F2B134',
+    loud:'Steadiness and trust. People rely on you, so watch for staying put when a change is due.',
+    quest:{title:'Make one rhythm that does not depend on mood',
+      founder:'Pick one weekly check-in with your partner or team. Same day, same time, 20 minutes, in the calendar.',
+      general:'Choose one small daily anchor (same time, same place) and keep it for 7 days.',
+      why:'Small repeated anchors build the steadiness this chart is light on.',
+      ask:'What would feel stable if I protected it?'}},
+  metal:{han:'金', name:'Metal', css:'var(--metal)', hex:'#C9D6E8',
+    loud:'Clarity and standards. You cut to what matters, so watch for being sharper than the moment needs.',
+    quest:{title:'Close one open loop',
+      founder:'List your open decisions. Pick the smallest one, decide it today and write the reason in one sentence.',
+      general:'Say no to one small request this week, or finish one thing you have left at 90 percent.',
+      why:'Closing one loop shows your mind that decisions are survivable.',
+      ask:'What am I keeping open because deciding feels risky?'}},
+  water:{han:'水', name:'Water', css:'var(--water)', hex:'#3D8BFF',
+    loud:'Depth and strategy. You see far, so watch for drifting across too many directions.',
+    quest:{title:'Give your thinking some quiet',
+      founder:'Block 30 minutes with no screen. Write what you would do differently if you started this business again.',
+      general:'Take a 20-minute walk without your phone, then write down one thing you noticed.',
+      why:'Unstructured quiet gives ideas room to connect.',
+      ask:'What do I need to stop and think about?'}}
+};
+
+/* ===== 数据：十种日主 ===== */
+var DM = {
+  '甲':{en:'Yang Wood', tag:'The Oak', line:'You grow in a straight line and others lean on your sense of direction.', strength:'You start things, hold a long view and stay with a plan when it gets hard.', trap:'You can stop bending. When the plan changes, you may defend it longer than it deserves.'},
+  '乙':{en:'Yin Wood', tag:'The Vine', line:'You find the way around the obstacle and you connect people without making noise about it.', strength:'You read people well and adapt quickly to what a situation needs.', trap:'You can bend too far and avoid the conversation that would clear the air.'},
+  '丙':{en:'Yang Fire', tag:'The Sun', line:'You are warm, visible and generous, and a room tends to lift when you walk in.', strength:'You energize people and you are willing to go first.', trap:'You can promise more than your week can hold, then run hot and go quiet.'},
+  '丁':{en:'Yin Fire', tag:'The Candle', line:'You work with a focused flame: precise, intense and good at what is close to you.', strength:'You notice detail and give deep attention to the people and problems you choose.', trap:'You can overthink and take criticism harder than it was meant.'},
+  '戊':{en:'Yang Earth', tag:'The Mountain', line:'You are steady and big-picture, and people feel safer with you nearby.', strength:'You hold teams together and stay calm when others rush.', trap:'You can be slow to move and stubborn once your mind is set.'},
+  '己':{en:'Yin Earth', tag:'The Field', line:'You grow things: people, projects and ideas that need patient tending.', strength:'You are practical, caring and good at turning rough material into something that works.', trap:'You can absorb too much and carry worries that belong to someone else.'},
+  '庚':{en:'Yang Metal', tag:'The Blade', line:'You decide fast and say what you mean, which saves everyone time.', strength:'You cut through noise and make hard calls without drama.', trap:'You can be blunt when the moment needed a softer edge.'},
+  '辛':{en:'Yin Metal', tag:'The Jewel', line:'You have taste and standards, and you notice the flaw in the work before anyone else does.', strength:'You raise the quality of whatever you touch.', trap:'You can slide into perfectionism and judge yourself harder than anyone else does.'},
+  '壬':{en:'Yang Water', tag:'The Ocean', line:'You think big and see how the pieces connect across a long distance.', strength:'You handle complexity and keep your eyes on the strategy.', trap:'You can scatter into too many directions and finish too few of them.'},
+  '癸':{en:'Yin Water', tag:'The Rain', line:'You are quiet, perceptive and absorb more than you show.', strength:'You pick up what is unsaid and your intuition is usually worth hearing.', trap:'You can hold back what you know and overthink before you speak.'}
+};
+
+/* ===== 数据：合伙人关系（以日主五行的生克判断）===== */
+var REL = {
+  mirror:{title:'Mirror', good:'You think alike, so you agree fast and trust each other quickly.', stuck:'You share the same blind spots, so nobody asks the awkward question.',
+    rules:['Before we commit money, we wait one night and each write down one reason not to.','Once a month we ask one outside person to challenge a decision we both liked.','We split roles on purpose: one of us owns "go", the other owns "check".']},
+  aFuelsB:{title:'You fuel them', good:'You supply ideas, energy and support, and your partner turns it into momentum.', stuck:'You can end up doing the giving while they get used to receiving.',
+    rules:['Each week we say out loud what we need back: time, credit or a decision.','We set a weekly cap on extra work either of us absorbs without asking.','Every Friday each of us names one thing we will take off the other\'s plate.']},
+  bFuelsA:{title:'They fuel you', good:'Your partner feeds you ideas, energy and backing, and you turn it into momentum.', stuck:'You can get used to receiving and miss what it costs them to keep giving.',
+    rules:['Each week we say out loud what we need back: time, credit or a decision.','We set a weekly cap on extra work either of us absorbs without asking.','Every Friday each of us names one thing we will take off the other\'s plate.']},
+  aSteersB:{title:'You steer them', good:'You bring direction and standards, and your partner gets sharper under that structure.', stuck:'Your pace can feel like pressure, and a partner under pressure tends to go quiet.',
+    rules:['The person who steers asks for the other\'s view first, before giving theirs.','We agree on three decisions the quieter partner owns without review.','When one of us feels pushed, we can call a 24-hour pause with no explanation needed.']},
+  bSteersA:{title:'They steer you', good:'Your partner brings direction and standards, and you get sharper under that structure.', stuck:'Their pace can feel like pressure, and you may start to hold your view back.',
+    rules:['The person who steers asks for the other\'s view first, before giving theirs.','We agree on three decisions the quieter partner owns without review.','When one of us feels pushed, we can call a 24-hour pause with no explanation needed.']}
+};
+
+/* ===== 文案：两个版本 ===== */
+var COPY = {
+  partner:{h1:'Is your business partner your elemental match?',
+    sub:'Enter two birthdays. You get each person\'s working style, how the two of you pair up, and a three-line working agreement you can send them.',
+    go:'Check our match', legend:'Player 1 · You', paywall:'Partner Playbook', pwText:'Three acts of small scenes. You each answer alone, then open the answers together. You end with a short reading of where your pictures differ and what you really know.'},
+  element:{h1:'What is your birth element?',
+    sub:'Find your Day Master, see which of the five elements runs thin in your chart, and get one small quest to try this week.',
+    go:'Reveal my element', legend:'Your birthday', paywall:'Full Element Reading', pwText:'A 30-day plan for your thinnest element, week by week, with a short check-in every Sunday.'}
+};
+
+/* ===== 语言：英文 / 中文（?lang=zh 优先，其次是上次的选择，再其次是浏览器语言）===== */
+var LANG=(function(){
+  var q='', st=null;
+  try{ q=new URLSearchParams(location.search).get('lang') }catch(e){}
+  if(q==='zh'||q==='en') return q;
+  try{ st=JSON.parse(localStorage.getItem('em_lang_v1')) }catch(e){}
+  if(st==='zh'||st==='en') return st;
+  try{ if((navigator.language||'').toLowerCase().indexOf('zh')===0) return 'zh' }catch(e){}
+  return 'en';
+})();
+
+var ZEL={
+  wood:{name:'木', loud:'有冲劲、能成长。你习惯往前推，但要留意开头多、收尾少。',
+    quest:{title:'先做一小步，并定下日期',
+      founder:'写下如果没人拦你、这个季度你最想开始的一件事。发给一个人，并约好第一步的日期。',
+      general:'说出一件你一直在等、还没开始的事。今天先做它的前 10 分钟，再把下一步写进日历。',
+      why:'带着日期的小小第一步，能把愿望变成计划。', ask:'我在等谁的许可才开始？'}},
+  fire:{name:'火', loud:'有能量、有存在感。你一进场大家就能感觉到，但要留意许诺超过自己能扛的。',
+    quest:{title:'还没做完，就先给人看一样东西',
+      founder:'把一份没做完的成果给团队以外的一个人看，问他第一眼注意到什么。',
+      general:'大声告诉一个人，你正在做的事，或你引以为傲的事。',
+      why:'说出口，进展对你才变得真实，也让别人有机会帮你。', ask:'谁还不知道我在做什么？'}},
+  earth:{name:'土', loud:'稳重、可信。大家愿意依靠你，但要留意该变的时候还留在原地。',
+    quest:{title:'建立一个不看心情的固定节奏',
+      founder:'选一个每周的固定碰头，和合伙人或团队：同一天、同一时间、20 分钟，写进日历。',
+      general:'选一个每天的小锚点（同一时间、同一地点），坚持 7 天。',
+      why:'小而重复的锚点，会补上这张盘里偏少的稳定感。', ask:'守住什么，会让我觉得踏实？'}},
+  metal:{name:'金', loud:'清晰、有标准。你能直接切到重点，但要留意比当下需要的更尖锐。',
+    quest:{title:'了结一件悬着的事',
+      founder:'列出你手上悬着的决定，挑最小的一个，今天就定，并用一句话写下理由。',
+      general:'这周拒绝一个小请求，或把一件做到 90% 的事收尾。',
+      why:'了结一件事，会让你的头脑知道：做决定是承受得起的。', ask:'有什么事我一直悬着，只因为一做决定就觉得有风险？'}},
+  water:{name:'水', loud:'有深度、有谋略。你看得远，但要留意在太多方向上漂移。',
+    quest:{title:'给思考留一点安静',
+      founder:'留出 30 分钟，不看屏幕。写下：如果这门生意重新开始，你会有什么不同的做法。',
+      general:'不带手机散步 20 分钟，然后写下你注意到的一件事。',
+      why:'不加结构的安静，给想法留出互相连接的空间。', ask:'我需要停下来想一想的是什么？'}}
+};
+ORDER.forEach(function(k){ ZEL[k].han=EL[k].han; ZEL[k].css=EL[k].css; ZEL[k].hex=EL[k].hex });
+
+var ZDM={
+  '甲':{en:'阳木', tag:'参天大树', line:'你像一条笔直生长的线，别人会依靠你的方向感。', strength:'你能开局、看得长远，计划变难时也能坚持。', trap:'你可能不再弯一弯。计划变了，你还会替它辩护得比它值得的更久。'},
+  '乙':{en:'阴木', tag:'藤萝', line:'你总能绕过障碍，不动声色地把人连在一起。', strength:'你善于读人，很快适应情境所需。', trap:'你可能弯得太过，回避那场本可以把话说开的对话。'},
+  '丙':{en:'阳火', tag:'太阳', line:'你温暖、醒目、慷慨，你一走进来，房间的气氛往往就亮起来。', strength:'你能让人有劲，也愿意第一个冲。', trap:'你可能许诺超出一周能承载的，然后烧得太旺、突然沉默。'},
+  '丁':{en:'阴火', tag:'烛火', line:'你的火焰专注：精准、强烈，擅长身边近处的事。', strength:'你留意细节，对你选定的人和问题会深度投入。', trap:'你可能想得太多，对批评的感受比对方本意更重。'},
+  '戊':{en:'阳土', tag:'高山', line:'你稳重、格局大，有你在场，人们更安心。', strength:'你能把团队凝在一起，别人慌时你很稳。', trap:'你可能动得慢，一旦下定决心就很固执。'},
+  '己':{en:'阴土', tag:'田园', line:'你会培育东西：需要耐心照料的人、项目和想法。', strength:'你务实、体贴，擅长把粗糙的原料变成可用的东西。', trap:'你可能吸收太多，背上本属于别人的担忧。'},
+  '庚':{en:'阳金', tag:'刀锋', line:'你决断快、话说得直，这能替大家省时间。', strength:'你能穿透噪音，不拖泥带水地做艰难的决定。', trap:'该柔一点的时候，你可能显得太直。'},
+  '辛':{en:'阴金', tag:'珠玉', line:'你有品位、有标准，别人没发现的瑕疵你先看到。', strength:'你经手的东西，质量都会被你拉高。', trap:'你可能滑向完美主义，对自己比对任何人都苛刻。'},
+  '壬':{en:'阳水', tag:'江海', line:'你想得大，能看见远处各个部分如何相连。', strength:'你能驾驭复杂局面，眼睛一直盯着战略。', trap:'你可能散到太多方向，做完的太少。'},
+  '癸':{en:'阴水', tag:'雨露', line:'你安静、敏锐，吸收的比表现出来的多。', strength:'你能捕捉没说出口的东西，你的直觉通常值得一听。', trap:'你可能把知道的藏着不说，开口之前想得太多。'}
+};
+
+var ZREL={
+  mirror:{title:'镜像', good:'你们想法相近，所以很快达成一致，也很快彼此信任。', stuck:'你们的盲区相同，所以没人会问那个尴尬的问题。',
+    rules:['投钱之前，我们先等一晚，各自写下一条“不该做”的理由。','每个月请一位外人，挑战一个我们俩都很喜欢的决定。','我们有意分工：一个人负责“上”，另一个负责“查”。']},
+  aFuelsB:{title:'你滋养对方', good:'你提供想法、能量和支持，你的伙伴把它变成动力。', stuck:'你可能一直在付出，而对方慢慢习惯了接受。',
+    rules:['每周我们当面说出自己需要什么回报：时间、认可或一个决定。','我们设一个每周上限：任何一方不打招呼就多扛的额外工作量。','每周五，各自说出一件愿意从对方手上接过来的事。']},
+  bFuelsA:{title:'对方滋养你', good:'你的伙伴给你想法、能量和支持，你把它变成动力。', stuck:'你可能习惯了接受，忽略了对方持续付出的代价。',
+    rules:['每周我们当面说出自己需要什么回报：时间、认可或一个决定。','我们设一个每周上限：任何一方不打招呼就多扛的额外工作量。','每周五，各自说出一件愿意从对方手上接过来的事。']},
+  aSteersB:{title:'你引导对方', good:'你带来方向和标准，在这样的结构下，你的伙伴会变得更锋利。', stuck:'你的节奏可能让对方感到压力，而承压的伙伴往往会沉默。',
+    rules:['负责引导的人，先问对方的看法，再说自己的。','我们约定三项决定，由更安静的一方自己拍板，不需要审核。','任何一方觉得被推着走时，可以喊一次 24 小时暂停，不必解释。']},
+  bSteersA:{title:'对方引导你', good:'你的伙伴带来方向和标准，在这样的结构下，你会变得更锋利。', stuck:'对方的节奏可能让你感到压力，你也许会开始把自己的看法压在心里。',
+    rules:['负责引导的人，先问对方的看法，再说自己的。','我们约定三项决定，由更安静的一方自己拍板，不需要审核。','任何一方觉得被推着走时，可以喊一次 24 小时暂停，不必解释。']}
+};
+
+var ZCOPY={
+  partner:{h1:'你的生意伙伴，和你五行合吗？',
+    sub:'输入两个人的生日，看看各自的做事风格、两人怎么搭配，还有一份可以直接发给对方的三条合作约定。',
+    go:'测测我们合不合', legend:'玩家 1 · 你', paywall:'合伙人手册', pwText:'三幕小场景。两个人各自作答，再一起翻开。最后得到一份简短的结果：你们心里的画面哪里不一样，哪些是真的知道。'},
+  element:{h1:'你的本命五行是什么？',
+    sub:'找出你的日主，看看八字里哪一行偏弱，并领取一个本周就能试试的小任务。',
+    go:'揭晓我的五行', legend:'你的生日', paywall:'完整五行解读', pwText:'针对你最弱那一行的 30 天计划，逐周行动，每周日有一次简短复盘。'}
+};
+
+var S={
+ en:{
+  start:'Press start', snd_on:'Sound on', snd_off:'Sound off', lang_btn:'中文',
+  dob:'Date of birth', tob:'Time of birth (optional)', lg2:'Player 2 · Your partner', hint_opt:'Optional. You can add this later.',
+  fine:'Your birth details are calculated in your browser and are never sent anywhere. Don\'t know the time? Leave it empty and the hour pillar is skipped.',
+  foot1:'<b>For entertainment and self-reflection.</b> These readings describe tendencies and don\'t predict events. They are not medical, legal, financial or life-span advice, and must not be used to screen, hire or judge people. Intended for adults 18 and over.',
+  foot2:'Method: the four pillars come from the classical Chinese calendar (year changes at Start of Spring, month at the solar terms). The time you enter is used as is, with no birthplace correction, and 23:00 to 23:59 counts as the same day. The element balance is a simple count of the eight characters, so treat it as a game board, not a verdict.',
+  foot3:'<b>Privacy.</b> Birth details are calculated in your browser and never sent. We record anonymous page events (which button was used, which ad you came from) and, only if you join the waiting list, your email.',
+  previewing:function(c){return 'Previewing the '+c+' version. '}, switch_to:function(c){return 'Switch to the '+c+' version'}, v_partner:'Partner', v_element:'Element',
+  err_engine:'The chart engine did not load. Check your connection and reload the page.', err_dob:'Enter your date of birth to continue.',
+  err_range:'Enter a birth date between 1920 and today.', err_range2:'Enter your partner\'s birth date between 1920 and today.',
+  sample:'Sample result. Enter your birthday above to see yours.',
+  st_char:'Character select', st_pair:'Pairing', st_quest:'Quest board', st_share:'Share',
+  p1_you:'Player 1 · You', p2_partner:'Player 2 · Partner',
+  caps:['Year','Month','Day','Hour'], cap_dm:'Day Master',
+  elements:'Elements', slots:function(n){return n+' slots'}, weakness:'Weakness', thin_line:function(n){return n+' runs thin in your chart'},
+  bar_aria:function(n,c,tot){return n+': '+c+' of '+tot},
+  your_char:'Your character', class_:function(g){return 'Class · '+g}, dm_label:'Day Master',
+  buff:'Buff', shine:'Where you shine', debuff:'Debuff', stuck:'Where you get stuck', loudest:'Loudest',
+  q_kicker:'Side quest accepted', q_why:'Why it works.', q_ask:'Ask yourself.', q_streak:'7-day streak',
+  xp:function(n){return 'XP '+(n*10)+' / 70'}, days_aria:function(n){return n+' of 7 days done'},
+  done_today:'Done for today', did_it:'I did it today', copy_quest:'Copy quest to my notes',
+  q_note:function(nm,ti,act){return 'My '+nm+' quest: '+ti+'. '+act},
+  q_msg:function(n){ return n>=7?'Quest complete. Come back next week for a new one.':(n>0?n+' of 7 days done':'7 days, one small step each') },
+  pair_tag:'Party synergy', coop:'Co-op', synergy:'Synergy', works:'Works well', friction:'Friction', gets_stuck:'Gets stuck',
+  who:'Who covers what', pact:'Party pact · try it for one month', pact_btn:'Seal the pact · copy for my partner',
+  and_:function(a,b){return a+' and '+b},
+  next_stage:'Next stage', add_partner:'Add your partner',
+  add_partner_txt:'Enter their birthday above to see how you pair up and get a three-line working agreement to send them.',
+  locked:'Locked', unlock:'Unlock · $4.99',
+  wl_txt:'<b>Not open yet.</b> We are testing whether this is useful. Leave your email and we will write once when it opens, at half price. We use it for nothing else.',
+  ph:'you@example.com', email_aria:'Email address', join:'Join the list',
+  sh_text:'Copy share text', sh_img:'Make share image', sh_alt:'Your share card',
+  sh_hold:'Press and hold the image to save it, or right-click it on a computer.',
+  copied:'Copied', wl_invalid:'Enter a valid email address.', wl_noconn:'The waiting list is not connected in this preview, so nothing was saved.',
+  saving:'Saving…', wl_ok:'You are on the list. We will write when it opens.', wl_fail:'Could not save that. Please try again in a moment.',
+  gap_both:function(n){return 'You are both thin in '+n+'. Nobody on this team naturally covers it, so put it on the calendar or bring in a hire, an advisor or a tool.'},
+  gap_swap:function(a,b){return 'You cover each other\'s gaps. Your partner is strong in '+a+' where you are thin, and you are strong in '+b+' where they are thin. Hand each other those parts of the work.'},
+  gap_b:function(a){return 'Your partner is strong in '+a+', exactly where you are thin. Give them that part of the work and say so out loud.'},
+  gap_a:function(b){return 'You are strong in '+b+', exactly where your partner is thin. Offer to own that part of the work.'},
+  gap_none:function(a,b){return 'Neither of you covers the other\'s gap: you are thin in '+a+' and your partner is thin in '+b+'. Decide who will practice each one, or bring in outside help.'},
+  agree:function(r){return 'Hi! I tried a quick partner check (Chinese Four Pillars, just for fun and reflection). It suggested we try three working rules for a month:\n\n1. '+r[0]+'\n2. '+r[1]+'\n3. '+r[2]+'\n\nNo pressure. We can change any of it. What do you think?'},
+  share_partner:function(a,b,ti,url){return 'I checked my business partner match: '+a+' × '+b+' = "'+ti+'". Try yours: '+url},
+  share_el:function(d,g,n,url){return 'I am '+d+' ('+g+') and my thinnest element is '+n+'. What is yours? '+url},
+  img_who:'WHO COVERS WHAT', img_weak:'WEAK', img_quest:'SIDE QUEST', img_class:function(g){return 'CLASS · '+g}, img_find:'FIND YOURS: '
+ },
+ zh:{
+  start:'按下开始', snd_on:'音效 开', snd_off:'音效 关', lang_btn:'EN',
+  dob:'出生日期', tob:'出生时间（选填）', lg2:'玩家 2 · 你的伙伴', hint_opt:'选填，之后也可以再补。',
+  fine:'出生信息只在你的浏览器里计算，不会发送到任何地方。不知道时辰？留空即可，时柱会跳过。',
+  foot1:'<b>仅供娱乐和自我反思。</b>这些解读描述的是倾向，不预测任何事件；不构成医疗、法律、财务或寿命方面的建议，也不得用于筛选、招聘或评判他人。面向 18 岁及以上成年人。',
+  foot2:'方法：四柱依据传统农历历法排出（年柱以立春为界，月柱以节气为界）。你输入的时间按原样使用，不做出生地校正，23:00 至 23:59 算作当天。五行强弱只是对八个字的简单计数，请当作游戏棋盘，而不是论断。',
+  foot3:'<b>隐私。</b>出生信息只在浏览器里计算，不会上传。我们会记录匿名的页面事件（点了哪个按钮、从哪条广告进来）；只有你加入等候名单时，才会记录你的邮箱。',
+  previewing:function(c){return '正在预览「'+c+'」版本。'}, switch_to:function(c){return '切换到「'+c+'」版本'}, v_partner:'合伙人', v_element:'五行',
+  err_engine:'排盘引擎没有加载成功，请检查网络后刷新页面。', err_dob:'请先输入你的出生日期。',
+  err_range:'请输入 1920 年至今的出生日期。', err_range2:'请输入 1920 年至今的伙伴出生日期。',
+  sample:'示例结果。在上面输入你的生日，查看你自己的。',
+  st_char:'选角色', st_pair:'配对', st_quest:'任务板', st_share:'分享',
+  p1_you:'玩家 1 · 你', p2_partner:'玩家 2 · 伙伴',
+  caps:['年柱','月柱','日柱','时柱'], cap_dm:'日主',
+  elements:'五行', slots:function(n){return n+' 个位置'}, weakness:'短板', thin_line:function(n){return '你的八字里「'+n+'」偏弱'},
+  bar_aria:function(n,c,tot){return n+'：'+tot+' 个中有 '+c+' 个'},
+  your_char:'你的角色', class_:function(g){return '称号 · '+g}, dm_label:'日主',
+  buff:'增益', shine:'你的闪光点', debuff:'减益', stuck:'容易卡住的地方', loudest:'最强',
+  q_kicker:'已接下支线任务', q_why:'为什么有效。', q_ask:'问问自己。', q_streak:'7 天连击',
+  xp:function(n){return '经验 '+(n*10)+' / 70'}, days_aria:function(n){return '7 天中已完成 '+n+' 天'},
+  done_today:'今天已完成', did_it:'我今天做了', copy_quest:'复制任务到备忘录',
+  q_note:function(nm,ti,act){return '我的「'+nm+'」任务：'+ti+'。'+act},
+  q_msg:function(n){ return n>=7?'任务完成。下周再来领新的。':(n>0?'7 天中已完成 '+n+' 天':'7 天，每天一小步') },
+  pair_tag:'组队协同', coop:'合作模式', synergy:'协同', works:'配合顺的地方', friction:'摩擦', gets_stuck:'容易卡住的地方',
+  who:'谁补谁的缺口', pact:'组队约定 · 先试一个月', pact_btn:'盖章约定 · 复制发给伙伴',
+  and_:function(a,b){return a+' 与 '+b},
+  next_stage:'下一关', add_partner:'加入你的伙伴',
+  add_partner_txt:'在上面输入对方的生日，看看你们如何搭配，并拿到一份可以发给对方的三条合作约定。',
+  locked:'未解锁', unlock:'解锁 · $4.99',
+  wl_txt:'<b>暂未开放。</b>我们正在测试这个功能是否有用。留下邮箱，开放时只写一封信通知你，并给半价。邮箱不会用于其他用途。',
+  ph:'you@example.com', email_aria:'邮箱地址', join:'加入名单',
+  sh_text:'复制分享文案', sh_img:'生成分享图', sh_alt:'你的分享卡片',
+  sh_hold:'手机上长按图片保存，电脑上右键保存。',
+  copied:'已复制', wl_invalid:'请输入有效的邮箱地址。', wl_noconn:'预览版没有连接等候名单，所以没有保存。',
+  saving:'保存中…', wl_ok:'已加入名单。开放时我们会写信给你。', wl_fail:'没有保存成功，请稍后再试。',
+  gap_both:function(n){return '你们俩都是「'+n+'」偏弱。团队里没有人天然补这一块，所以要写进日历，或请人、请顾问、用工具来补。'},
+  gap_swap:function(a,b){return '你们互相补位。你偏弱的「'+a+'」，伙伴很强；伙伴偏弱的「'+b+'」，你很强。把这些工作互相交给对方。'},
+  gap_b:function(a){return '伙伴在「'+a+'」上很强，正好是你偏弱的地方。把这部分工作交给对方，并当面说出来。'},
+  gap_a:function(b){return '你在「'+b+'」上很强，正好是伙伴偏弱的地方。主动接下这部分工作。'},
+  gap_none:function(a,b){return '你们谁也补不了对方的缺口：你偏弱的是「'+a+'」，伙伴偏弱的是「'+b+'」。决定谁来练哪一项，或请外部帮助。'},
+  agree:function(r){return '你好！我试了一个合伙人小测试（中国传统八字，仅供娱乐和自我反思）。它建议我们试一个月的三条合作规则：\n\n1. '+r[0]+'\n2. '+r[1]+'\n3. '+r[2]+'\n\n不勉强，什么都可以改。你怎么看？'},
+  share_partner:function(a,b,ti,url){return '我测了我和生意伙伴的五行搭配：'+a+' × '+b+' =「'+ti+'」。你也来测测：'+url},
+  share_el:function(d,g,n,url){return '我是'+d+'（'+g+'），我最弱的一行是「'+n+'」。你的是什么？'+url},
+  img_who:'谁补谁的缺口', img_weak:'偏弱', img_quest:'支线任务', img_class:function(g){return '称号 · '+g}, img_find:'来测你的：'
+ }
+};
+
+var PB={
+ en:{
+  title:'Preview · what is inside', conv:'Conversation 1 · Money and effort',
+  convq:['What will each of us put in over the next six months: money, hours, contacts? Put numbers on it.','What does each of us expect to take out, and by when?','What happens if one of us cannot put in what we said?'],
+  open:'Say this first', wk:'Week 1 · Align', wkgoal:'Get the unspoken things onto the table before any work starts.',
+  together:'Together', you:'You', partner:'Partner', togtxt:'Hold conversations 1 and 2. Write the answers on one page that both of you can see.',
+  incl:'Also included',
+  s1:'Act 1 · The same picture?', s1q:'At a dinner, a friend who knows nothing about your field asks: what are the two of you building together? What do you say?', s1h:'Each of you answers alone first. Then you open the answers side by side.', a:'You', b:'Partner', blank:'Your answer',
+  lock_match:['A Monday morning three years from now: what does each of you see?','One real customer at one real moment: what just happened to them?','A surprise 10,000 lands in the account: each of your first reactions','Act 2 · A customer gives you 30 minutes: who talks, who delivers, who does the numbers?','The first customer pays: who is it, and when? One year later someone wants out: what then?','Act 3 · Strip away names and enthusiasm: what do you actually know, and how?'],
+  lock_pair:['Conversation 2 · Roles and decisions','Conversation 3 · Leaving well','Weeks 2 to 4 of the plan','Weekly 30-minute meeting agenda','Ten questions before you sign anything'],
+  lock_solo:['Weeks 2 to 4 of the plan','A short Sunday check-in for every week'],
+  say:{mirror:'We usually agree fast. Before we decide today, I would like us each to argue the other side for ten minutes.',aFuelsB:'I would like to say out loud what I have been giving, and ask what I would like back.',bFuelsA:'I want to thank you for what you add, and ask what you need back from me.',aSteersB:'I tend to set the pace. If it ever feels like pressure, tell me. I will ask your view before I give mine.',bSteersA:'I sometimes hold my view back. If you ask me first, I will say it earlier.'},
+  w1:{wood:'Write your 12-month goal for this venture in one sentence and send it to your partner before you meet.',fire:'Tell one person outside the partnership what the two of you are planning. Note their first reaction.',earth:'Fix one recurring slot for the two of you: same day, same time, 30 minutes.',metal:'List the decisions still open between you. Mark which ones are easy to reverse.',water:'Spend 30 minutes alone with no screen. Write what you fear about this partnership and what you hope for.'}
+ },
+ zh:{
+  title:'预览 · 解锁后有什么', conv:'对话 1 · 钱和投入',
+  convq:['未来六个月，我们每个人各投入多少：钱、时间、人脉？把数字写出来。','我们各自期望拿回什么，什么时候拿回？','如果有一方做不到自己说的投入，怎么办？'],
+  open:'开场先说这句', wk:'第 1 周 · 对齐', wkgoal:'在开始干活之前，把没说出口的事摆到桌面上。',
+  together:'两人一起', you:'你', partner:'伙伴', togtxt:'完成对话 1 和对话 2，把答案写在两个人都看得到的一页纸上。',
+  incl:'还包括',
+  s1:'第一幕 · 同一幅画面', s1q:'饭局上，一个不懂行的朋友问你：你们俩合伙在做什么？你会怎么回答？', s1h:'两个人先各自写，不要偷看对方。写完再一起翻开。', a:'你', b:'伙伴', blank:'你的回答',
+  lock_match:['三年后的某个周一早上：你们各自看到的是什么','一个具体的客户，在哪个时刻拿起手机来找你们','账上突然进来 10 万：两个人的第一反应','第二幕 · 重要客户只给 30 分钟：谁上台、谁兜底、谁算账','第一个客户掏钱的那一刻；一年后有人想退出，你们怎么办','第三幕 · 把名字和热情都拿掉：哪些是你们真的知道的'],
+  lock_pair:['对话 2 · 分工和决策权','对话 3 · 体面地退出','计划的第 2 到第 4 周','每周 30 分钟会议议程','签任何协议之前的十个问题'],
+  lock_solo:['计划的第 2 到第 4 周','每周日的简短复盘问题'],
+  say:{mirror:'我们通常很快就能达成一致。今天做决定之前，我想让我们每人先替对方的立场辩论十分钟。',aFuelsB:'我想把我一直在付出的东西说出来，也想问问我希望得到什么回报。',bFuelsA:'我想谢谢你为这件事付出的一切，也想问你需要我回报什么。',aSteersB:'我习惯定节奏。如果你觉得有压力，请直接告诉我。我会先问你的看法，再说我的。',bSteersA:'我有时会把自己的看法压着不说。如果你先问我，我会更早说出来。'},
+  w1:{wood:'用一句话写下你对这件事未来 12 个月的目标，开会前先发给伙伴。',fire:'告诉一个合伙关系之外的人你们的打算，记下他的第一反应。',earth:'为你们两人固定一个重复的时间：同一天、同一时间、30 分钟。',metal:'列出你们之间还悬着的决定，标出哪些容易反悔、可以撤回。',water:'独处 30 分钟，不看屏幕。写下你对这段合作的担心和期待。'}
+ }
+};
+function pb(k){ return (PB[LANG]||PB.en)[k] }
+function previewHtml(){
+  var me=STATE.me, pa=(variant()==='partner'&&STATE.partner)?STATE.partner:null, h='', rel;
+  h+='<h3>'+pb('title')+'</h3>';
+  if(pa){
+    rel=pairing(me,pa).rel;
+    h+='<div class="say"><span>'+pb('open')+'</span>'+pb('say')[rel]+'</div>';
+    h+='<h3>'+pb('s1')+'</h3><p>'+pb('s1q')+'</p><p class="fine">'+pb('s1h')+'</p><div class="cells"><div class="cell" style="--c:var(--paper)"><b>'+pb('a')+'</b><p style="color:var(--muted)">'+pb('blank')+'</p></div><div class="cell" style="--c:var(--paper)"><b>'+pb('b')+'</b><p style="color:var(--muted)">'+pb('blank')+'</p></div></div>';
+    h+='<h3>'+pb('incl')+'</h3><ul class="lk">'+pb('lock_match').map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul>';
+    return h;
+  }
+  h+='<h3>'+pb('wk')+'</h3><p>'+pb('wkgoal')+'</p><div class="cells">';
+  if(pa) h+='<div class="cell" style="--c:var(--paper)"><b>'+pb('together')+'</b><p>'+pb('togtxt')+'</p></div>';
+  h+='<div class="cell" style="--c:'+EL[me.thin].css+'"><b>'+pb('you')+' · '+E(me.thin).name+'</b><p>'+pb('w1')[me.thin]+'</p></div>';
+  if(pa) h+='<div class="cell" style="--c:'+EL[pa.thin].css+'"><b>'+pb('partner')+' · '+E(pa.thin).name+'</b><p>'+pb('w1')[pa.thin]+'</p></div>';
+  h+='</div><h3>'+pb('incl')+'</h3><ul class="lk">'+pb(pa?'lock_pair':'lock_solo').map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul>';
+  return h;
+}
+function E(k){return LANG==='zh'?ZEL[k]:EL[k]}
+function DX(x){return LANG==='zh'?ZDM[x]:DM[x]}
+function R(k){return LANG==='zh'?ZREL[k]:REL[k]}
+function C(v){return LANG==='zh'?ZCOPY[v]:COPY[v]}
+function t(k){
+  var v=(S[LANG]||S.en)[k]; if(v===undefined) v=S.en[k];
+  return typeof v==='function'?v.apply(null,Array.prototype.slice.call(arguments,1)):v;
+}
+
+/* ===== 工具函数 ===== */
+function $(s,r){return (r||document).querySelector(s)}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+function variant(){var h=location.hash.replace('#',''); return h==='element'?'element':'partner'}
+var SID=(function(){ try{ var s=sessionStorage.getItem('em_sid'); if(!s){ s=Math.random().toString(36).slice(2,10); sessionStorage.setItem('em_sid',s) } return s }catch(e){ return Math.random().toString(36).slice(2,10) } })();
+function qp(k){ try{ return new URLSearchParams(location.search).get(k)||'' }catch(e){ return '' } }
+function track(name,data){
+  var ev={type:'event', event:'em_'+name, variant:variant(), sid:SID, ts:new Date().toISOString(), src:qp('utm_source'), camp:qp('utm_campaign'), ad:qp('utm_content'), w:window.innerWidth, lang:LANG}; for(var k in (data||{})) ev[k]=data[k];
+  try{(window.dataLayer=window.dataLayer||[]).push(ev)}catch(e){}
+  var url=CONFIG.eventEndpoint||CONFIG.endpoint;
+  if(url){try{var b=JSON.stringify(ev); if(navigator.sendBeacon){navigator.sendBeacon(url,b)}else{fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:b,keepalive:true})}}catch(e){}}
+}
+function store(key,val){
+  try{ if(val===undefined){return JSON.parse(localStorage.getItem(key))} localStorage.setItem(key,JSON.stringify(val)) }catch(e){ return (store.mem||(store.mem={}))[key] = val===undefined? (store.mem||{})[key] : val }
+}
+function today(){var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+
+/* ===== 排盘 ===== */
+function calc(dateStr, timeStr){
+  var p=dateStr.split('-').map(Number), known=!!timeStr, h=12, mi=0;
+  if(known){var t=timeStr.split(':').map(Number); h=t[0]; mi=t[1]}
+  var ec=Solar.fromYmdHms(p[0],p[1],p[2],h,mi,0).getLunar().getEightChar();
+  var stems=[ec.getYearGan(),ec.getMonthGan(),ec.getDayGan(),known?ec.getTimeGan():null];
+  var branches=[ec.getYearZhi(),ec.getMonthZhi(),ec.getDayZhi(),known?ec.getTimeZhi():null];
+  var counts={wood:0,fire:0,earth:0,metal:0,water:0}, total=0;
+  stems.forEach(function(s){if(s){counts[STEM[s][0]]++; total++}});
+  branches.forEach(function(b){if(b){counts[BRANCH[b]]++; total++}});
+  var dm=stems[2], dmEl=STEM[dm][0];
+  var parent=ORDER.filter(function(k){return GEN[k]===dmEl})[0];
+  var min=Math.min.apply(null,ORDER.map(function(k){return counts[k]}));
+  var max=Math.max.apply(null,ORDER.map(function(k){return counts[k]}));
+  var thinSet=ORDER.filter(function(k){return counts[k]===min});
+  var loudSet=ORDER.filter(function(k){return counts[k]===max});
+  var thin=thinSet.indexOf(parent)>-1?parent:thinSet[0];
+  var loud=loudSet.indexOf(dmEl)>-1?dmEl:loudSet[0];
+  return {stems:stems, branches:branches, counts:counts, total:total, dm:dm, dmEl:dmEl, thin:thin, loud:loud, known:known};
+}
+
+/* ===== 配对 ===== */
+function pairing(a,b){
+  var rel;
+  if(a.dmEl===b.dmEl) rel='mirror';
+  else if(GEN[a.dmEl]===b.dmEl) rel='aFuelsB';
+  else if(GEN[b.dmEl]===a.dmEl) rel='bFuelsA';
+  else if(CTL[a.dmEl]===b.dmEl) rel='aSteersB';
+  else rel='bSteersA';
+  var tA=a.thin, tB=b.thin, nA=E(tA).name, nB=E(tB).name, gap;
+  if(tA===tB){ gap={text:t('gap_both',nA), el:tA} }
+  else if(b.counts[tA]>=2 && a.counts[tB]>=2){ gap={text:t('gap_swap',nA,nB), el:tA} }
+  else if(b.counts[tA]>=2){ gap={text:t('gap_b',nA), el:tA} }
+  else if(a.counts[tB]>=2){ gap={text:t('gap_a',nB), el:tB} }
+  else { gap={text:t('gap_none',nA,nB), el:tA} }
+  return {rel:rel, gap:gap};
+}
+function agreementText(pr){ return t('agree', R(pr.rel).rules) }
+
+/* ===== 八卦转盘（装饰）===== */
+function bagua(){
+  var tri=['111','011','101','001','110','010','100','000'], s='', i, j, g, y, bits;
+  for(i=0;i<8;i++){
+    bits=tri[i]; g='';
+    for(j=0;j<3;j++){
+      y=-91+j*7;
+      if(bits.charAt(j)==='1'){ g+='<line x1="-13" y1="'+y+'" x2="13" y2="'+y+'"/>' }
+      else { g+='<line x1="-13" y1="'+y+'" x2="-3" y2="'+y+'"/><line x1="3" y1="'+y+'" x2="13" y2="'+y+'"/>' }
+    }
+    s+='<g transform="rotate('+(i*45)+')">'+g+'</g>';
+  }
+  return '<svg viewBox="-100 -100 200 200" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true" focusable="false">'
+    +'<circle r="98" stroke-width=".8"/><circle r="66" stroke-width=".8"/><circle r="62" stroke-width=".8" stroke-dasharray="1 4"/><circle r="30" stroke-width="1.2"/>'
+    +s+'<path d="M0 -30 A30 30 0 0 1 0 30 A15 15 0 0 1 0 0 A15 15 0 0 0 0 -30Z" fill="currentColor" stroke="none"/></svg>';
+}
+
+/* ===== 渲染 ===== */
+function stage(s){return '<p class="stage">'+s+'</p>'}
+function pillarsHtml(p){
+  var caps=t('caps');
+  return '<div class="pillars">'+caps.map(function(c,i){
+    var s=p.stems[i], b=p.branches[i];
+    if(!s){return '<div class="pillar"><span class="cap">'+c+'</span><span class="tile unk">?</span><span class="tile br unk">?</span></div>'}
+    return '<div class="pillar'+(i===2?' dm':'')+'"><span class="cap">'+(i===2?t('cap_dm'):c)+'</span>'
+      +'<span class="tile" lang="zh" style="--c:'+EL[STEM[s][0]].css+'">'+s+'</span>'
+      +'<span class="tile br" lang="zh" style="--c:'+EL[BRANCH[b]].css+'">'+b+'</span></div>';
+  }).join('')+'</div>';
+}
+function barsHtml(p){
+  var rows=ORDER.map(function(k,ri){
+    var n=p.counts[k], pips='', i, nm=E(k).name;
+    for(i=0;i<p.total;i++) pips+='<i class="pip'+(i<n?' on':'')+'" style="--i:'+i+'"></i>';
+    return '<li class="bar'+(k===p.thin?' thin':'')+'" style="--c:'+EL[k].css+'; --r:'+ri+'" aria-label="'+t('bar_aria',nm,n,p.total)+'">'
+      +'<span class="el"><b class="han" lang="zh" style="font-weight:400">'+EL[k].han+'</b>'+(LANG==='zh'?'':nm)+'</span><span class="pips" aria-hidden="true">'+pips+'</span><span class="n">'+n+'</span></li>';
+  }).join('');
+  return '<div class="hud"><div class="hud-t"><span>'+t('elements')+'</span><span>'+t('slots',p.total)+'</span></div>'
+    +'<ul class="bars" style="--n:'+p.total+'">'+rows+'</ul>'
+    +'<p class="weak"><b>'+t('weakness')+'</b><span>'+t('thin_line',E(p.thin).name)+'</span></p></div>';
+}
+function personHtml(p, label, v){
+  var d=DX(p.dm);
+  return '<section class="card">'
+    +'<div class="hdr"><span class="tagline">'+(label||t('your_char'))+'</span><span class="sticker">'+t('class_',d.tag)+'</span></div>'
+    +'<div class="ident"><div class="seal" lang="zh" aria-hidden="true">'+p.dm+'</div><div><h2>'+d.en+'</h2><p class="nm-sub">'+t('dm_label')+'</p></div></div>'
+    +'<p class="essence">'+d.line+'</p>'
+    +pillarsHtml(p)
+    +barsHtml(p)
+    +'<div class="bd"><div><h3><i>'+t('buff')+'</i>'+t('shine')+'</h3><p>'+d.strength+'</p></div>'
+    +'<div><h3><i class="bad">'+t('debuff')+'</i>'+t('stuck')+'</h3><p>'+d.trap+'</p></div>'
+    +'<div class="loud"><h3><i>'+t('loudest')+'</i>'+E(p.loud).name+'</h3><p>'+E(p.loud).loud+'</p></div></div>'
+    +'</section>';
+}
+function questMsg(n){ return t('q_msg',n) }
+function questDays(el){var s=store('em_quest_v1'); if(!s||s.el!==el) return []; return s.days||[]}
+function questHtml(p, v){
+  var q=E(p.thin).quest, act=v==='partner'?q.founder:q.general;
+  var days=questDays(p.thin), n=Math.min(days.length,7), done=days.indexOf(today())>-1, dots='', i;
+  for(i=0;i<7;i++) dots+='<i class="dot'+(i<n?' on':'')+'" data-n="'+(i+1)+'"></i>';
+  return '<section class="panel quest" id="quest" style="--c:'+EL[p.thin].css+'">'
+    +'<p class="kicker"><b>'+t('q_kicker')+'</b><span>'+t('thin_line',E(p.thin).name)+'</span></p>'
+    +'<h2>'+q.title+'</h2>'
+    +'<p class="act">'+act+'</p>'
+    +'<p class="why"><b>'+t('q_why')+'</b> '+q.why+'</p>'
+    +'<p class="ask"><b>'+t('q_ask')+'</b> '+q.ask+'</p>'
+    +'<div class="log"><div class="xp"><span>'+t('q_streak')+'</span><span id="xpv">'+t('xp',n)+'</span></div>'
+    +'<div class="xpbar" aria-hidden="true"><i class="xpfill" id="xpf" style="--p:'+(n/7*100)+'"></i></div>'
+    +'<div class="dots" role="img" aria-label="'+t('days_aria',n)+'">'+dots+'</div>'
+    +'<div class="btn-row"><button class="btn" id="qdone"'+(done?' disabled':'')+'>'+(done?t('done_today'):t('did_it'))+'</button>'
+    +'<button class="btn ghost" data-copy="'+encodeURIComponent(t('q_note',E(p.thin).name,q.title,act))+'" data-track="copy_quest">'+t('copy_quest')+'</button></div>'
+    +'<p class="msg" id="qmsg">'+questMsg(days.length)+'</p></div>'
+    +'</section>';
+}
+function pairHtml(a,b){
+  var pr=pairing(a,b), r=R(pr.rel);
+  return '<section class="card" id="pair">'
+    +'<div class="hdr"><span class="tagline">'+t('pair_tag')+'</span><span class="sticker">'+t('coop')+'</span></div>'
+    +'<div class="pair-seals"><div class="seal" lang="zh" aria-hidden="true">'+a.dm+'</div><span class="x" aria-hidden="true">×</span><div class="seal" lang="zh" aria-hidden="true">'+b.dm+'</div></div>'
+    +'<div><h2 class="big">'+r.title+'</h2><p class="nm-sub">'+t('and_',DX(a.dm).en,DX(b.dm).en)+'</p></div>'
+    +'<div class="pair-two"><div><h3><i>'+t('synergy')+'</i>'+t('works')+'</h3><p>'+r.good+'</p></div><div><h3><i class="bad">'+t('friction')+'</i>'+t('gets_stuck')+'</h3><p>'+r.stuck+'</p></div></div>'
+    +'<div class="gap" style="--c:'+EL[pr.gap.el].css+'"><p class="gap-t">'+t('who')+'</p><p>'+pr.gap.text+'</p></div>'
+    +'<div><p class="pact-t">'+t('pact')+'</p>'
+    +'<ol class="pair-rules">'+r.rules.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ol></div>'
+    +'<div class="btn-row"><button class="btn sm" data-copy="'+encodeURIComponent(agreementText(pr))+'" data-track="copy_agreement">'+t('pact_btn')+'</button></div>'
+    +'</section>';
+}
+function deeperHtml(v){
+  var c=C(v);
+  return '<section class="locked"><p class="kicker"><b>'+t('locked')+'</b></p><h2>'+c.paywall+'</h2><p>'+c.pwText+'</p>'
+    +'<div><button class="btn" id="pw">'+t('unlock')+'</button></div>'
+    +'<div class="pv" id="pv" hidden>'+previewHtml()+'</div>'
+    +'<div class="waitlist" id="wl" hidden><p>'+t('wl_txt')+'</p>'
+    +'<div class="rowf"><input type="email" id="em" placeholder="'+t('ph')+'" autocomplete="email" aria-label="'+t('email_aria')+'"><button class="btn sm" id="wlgo" type="button">'+t('join')+'</button></div>'
+    +'<p class="fine" id="wlmsg" role="status"></p></div></section>';
+}
+function shareHtml(){
+  return '<section class="share"><div class="btn-row"><button class="btn ghost sm" id="shtext">'+t('sh_text')+'</button><button class="btn ghost sm" id="shimg">'+t('sh_img')+'</button></div>'
+    +'<div id="shout"></div></section>';
+}
+
+var STATE={me:null, partner:null, sample:true};
+
+function render(){
+  var v=variant(), out=$('#out'), html='';
+  if(!STATE.me){out.innerHTML=''; return}
+  if(STATE.sample) html+='<span class="sample-tag">'+t('sample')+'</span>';
+  if(v==='partner' && STATE.partner){
+    html+=stage(t('st_char'));
+    html+=personHtml(STATE.me,t('p1_you'),v);
+    html+=personHtml(STATE.partner,t('p2_partner'),v);
+    html+=stage(t('st_pair'));
+    html+=pairHtml(STATE.me,STATE.partner);
+    html+=stage(t('st_quest'));
+    html+=questHtml(STATE.me,v);
+  }else{
+    html+=stage(t('st_char'));
+    html+=personHtml(STATE.me,'',v);
+    html+=stage(t('st_quest'));
+    html+=questHtml(STATE.me,v);
+    if(v==='partner'){ html+='<section class="panel"><p class="kicker"><b>'+t('next_stage')+'</b></p><h2>'+t('add_partner')+'</h2><p class="act">'+t('add_partner_txt')+'</p></section>'; }
+  }
+  html+=stage(t('st_share'))+shareHtml()+deeperHtml(v);
+  out.innerHTML=html;
+  wire();
+  watchPair();
+}
+
+/* ===== 音效（代码合成，默认静音，不加载任何音频文件）===== */
+var SND={on:false, ctx:null, master:null, nb:null};
+/* 五声音阶：宫商角徵羽 对应 土金木火水 */
+var NOTE={earth:261.63, metal:293.66, wood:329.63, fire:392.00, water:440.00};
+function sndCreate(){
+  try{
+    var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return false;
+    var c=new AC(), comp=c.createDynamicsCompressor(), i, d;
+    SND.master=c.createGain(); SND.master.gain.value=0.5; SND.master.connect(comp); comp.connect(c.destination);
+    SND.nb=c.createBuffer(1, Math.floor(c.sampleRate*0.3), c.sampleRate); d=SND.nb.getChannelData(0);
+    for(i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    SND.ctx=c; return true;
+  }catch(e){ return false }
+}
+function sndReady(){
+  if(!SND.on) return false;
+  if(!SND.ctx && !sndCreate()) return false;
+  if(SND.ctx.state==='suspended'){ try{ var r=SND.ctx.resume(); if(r&&r.catch) r.catch(function(){}) }catch(e){} }
+  return true;
+}
+function sndGain(on){
+  if(!SND.ctx) return;
+  var g=SND.master.gain, t=SND.ctx.currentTime;
+  g.cancelScheduledValues(t);
+  if(on){ g.setValueAtTime(0.5,t) } else { g.setTargetAtTime(0.0001,t,0.03) }
+}
+function env(g,t,att,peak,dur){
+  peak=Math.max(peak,0.0002);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(peak,t+att);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+att+dur);
+}
+function osc(type,f,t,dur,peak,att){
+  var c=SND.ctx, o=c.createOscillator(), g=c.createGain(); att=att||0.005;
+  o.type=type; o.frequency.setValueAtTime(f,t); env(g,t,att,peak,dur);
+  o.connect(g); g.connect(SND.master); o.start(t); o.stop(t+att+dur+0.05);
+}
+function noiseHit(t,dur,peak,cut){
+  var c=SND.ctx, s=c.createBufferSource(), f=c.createBiquadFilter(), g=c.createGain();
+  s.buffer=SND.nb; f.type='lowpass'; f.frequency.value=cut; env(g,t,0.002,peak,dur);
+  s.connect(f); f.connect(g); g.connect(SND.master); s.start(t); s.stop(t+dur+0.05);
+}
+/* 古琴式拨弦 */
+function pluck(f,t,v){ osc('triangle',f,t,1.0,0.26*v); osc('sine',f*2,t,0.5,0.08*v) }
+/* 磬/编钟：几个不成整数比的泛音 */
+function bell(f,t,v,d){
+  d=d||1.6;
+  [[1,1,1],[2.0,0.45,0.7],[2.76,0.3,0.5],[5.4,0.12,0.3]].forEach(function(p){ osc('sine',f*p[0],t,d*p[2],0.2*v*p[1],0.003) });
+}
+/* 印章落下的低沉一击 */
+function thud(t,v){
+  var c=SND.ctx, o=c.createOscillator(), g=c.createGain();
+  o.type='sine'; o.frequency.setValueAtTime(130,t); o.frequency.exponentialRampToValueAtTime(42,t+0.22);
+  env(g,t,0.004,0.55*v,0.28); o.connect(g); g.connect(SND.master); o.start(t); o.stop(t+0.4);
+  noiseHit(t,0.05,0.12*v,900);
+}
+/* 木鱼 */
+function wood(t,v,f0){
+  var c=SND.ctx, o=c.createOscillator(), g=c.createGain(); f0=f0||760;
+  o.type='triangle'; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f0*0.55,t+0.05);
+  env(g,t,0.002,0.3*v,0.07); o.connect(g); g.connect(SND.master); o.start(t); o.stop(t+0.15);
+}
+function gong(t,v){
+  [[1,1,3.2],[1.5,0.6,2.6],[2.2,0.45,2.2],[3.1,0.3,1.6],[4.7,0.18,1.1]].forEach(function(p){ osc('sine',98*p[0],t,p[2],0.22*v*p[1],0.01) });
+}
+var sfx={
+  tick:function(){ if(sndReady()) wood(SND.ctx.currentTime+0.001,1) },
+  knock:function(){ if(sndReady()) wood(SND.ctx.currentTime+0.001,1,320) },
+  /* 命盘揭晓：印章一击，然后五行各弹自己的音，音量跟能量条一致，数量为 0 的元素是静音（缺一个音） */
+  reveal:function(p,demo){
+    if(!sndReady()) return;
+    var t=SND.ctx.currentTime, b=demo?0.1:0.9;
+    if(!demo){ thud(t+0.62,1); bell(880,t+0.64,0.5,1.4) }
+    ORDER.forEach(function(k,i){ var n=p.counts[k]; if(n>0) pluck(NOTE[k], t+b+i*0.22, Math.min(1,0.25+0.2*n)) });
+    bell(NOTE[p.dmEl]/2, t+b+5*0.22+0.1, 0.7, 2.2);
+  },
+  quest:function(n,thin){
+    if(!sndReady()) return;
+    var t=SND.ctx.currentTime+0.01, f=NOTE[thin]*2, run=n>=7?[1,9/8,5/4,3/2,5/3,2]:[1,5/4,3/2], end=t+run.length*0.09;
+    run.forEach(function(r,i){ pluck(f*r,t+i*0.09,0.8) });
+    bell(f*run[run.length-1],end,0.6,1.4);
+    if(n>=7) gong(end,1);
+  },
+  /* 合盘：同类用八度，相生用五度，相克用大二度（有摩擦但不刺耳） */
+  pair:function(pr,aEl){
+    if(!sndReady()) return;
+    var t=SND.ctx.currentTime+0.02, f=NOTE[aEl], ratio=pr.rel==='mirror'?2:(pr.rel.indexOf('Fuels')>-1?1.5:9/8);
+    bell(f,t,0.7,2); bell(f*ratio,t+0.12,0.7,2);
+  },
+  pact:function(){
+    if(!sndReady()) return;
+    var t=SND.ctx.currentTime+0.01; bell(660,t,0.6,1.2); bell(990,t+0.14,0.6,1.4);
+  }
+};
+function paintSnd(){
+  var b=$('#snd'); if(!b) return;
+  b.setAttribute('aria-pressed', SND.on?'true':'false'); $('#sndl').textContent=t(SND.on?'snd_on':'snd_off');
+}
+function sndInitUi(){
+  SND.on=(store('em_sound_v1')===true); paintSnd();
+  $('#snd').addEventListener('click',function(){
+    SND.on=!SND.on; store('em_sound_v1',SND.on); paintSnd(); track('sound_toggle',{on:SND.on});
+    if(SND.on){
+      if(sndReady()){ sndGain(true); sfx.tick(); if(STATE.me) setTimeout(function(){ sfx.reveal(STATE.me,true) },180) }
+    }else{ sndGain(false) }
+  });
+  document.addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('.btn');
+    if(!b||b.disabled||b.id==='qdone'||b.getAttribute('data-track')==='copy_agreement') return;
+    sfx.tick();
+  });
+}
+function watchPair(){
+  var el=$('#pair'); if(!el||!window.IntersectionObserver||STATE.sample||!STATE.partner) return;
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ io.disconnect(); sfx.pair(pairing(STATE.me,STATE.partner),STATE.me.dmEl) } });
+  },{threshold:0.45});
+  io.observe(el);
+}
+
+/* ===== 事件 ===== */
+function copyText(text, btn){
+  var label=btn.textContent;
+  function ok(){btn.textContent=t('copied'); setTimeout(function(){btn.textContent=label},1800)}
+  function fallback(){
+    var ta=document.createElement('textarea'); ta.className='fallback'; ta.readOnly=true; ta.value=text;
+    btn.parentNode.parentNode.appendChild(ta); ta.focus(); ta.select();
+    try{ if(document.execCommand('copy')) ok() }catch(e){}
+  }
+  try{ navigator.clipboard.writeText(text).then(ok, fallback) }catch(e){ fallback() }
+}
+function shareText(){
+  var v=variant(), url=CONFIG.shareUrl||(location.origin+location.pathname+(LANG==='zh'?'?lang=zh':'')+'#'+v), me=STATE.me, d=DX(me.dm);
+  if(v==='partner' && STATE.partner){
+    var pr=pairing(me,STATE.partner);
+    return t('share_partner',DX(me.dm).en,DX(STATE.partner.dm).en,R(pr.rel).title,url);
+  }
+  return t('share_el',d.en,d.tag,E(me.thin).name,url);
+}
+function paintQuest(n){
+  n=Math.min(n,7);
+  $$('#quest .dot').forEach(function(d,i){ d.classList.toggle('on', i<n) });
+  var xv=$('#xpv'); if(xv) xv.textContent=t('xp',n);
+  var xf=$('#xpf'); if(xf) xf.style.setProperty('--p', n/7*100);
+  var dd=$('#quest .dots'); if(dd) dd.setAttribute('aria-label', t('days_aria',n));
+}
+function wire(){
+  $$('[data-copy]').forEach(function(b){ b.onclick=function(){ track(b.getAttribute('data-track')||'copy'); if(b.getAttribute('data-track')==='copy_agreement') sfx.pact(); copyText(decodeURIComponent(b.getAttribute('data-copy')), b) } });
+  var qd=$('#qdone'); if(qd) qd.onclick=function(){
+    var el=STATE.me.thin, s=store('em_quest_v1'); if(!s||s.el!==el) s={el:el,days:[]};
+    if(s.days.indexOf(today())<0) s.days.push(today());
+    store('em_quest_v1',s); track('quest_done',{n:s.days.length});
+    paintQuest(s.days.length); sfx.quest(s.days.length, el);
+    qd.disabled=true; qd.textContent=t('done_today'); $('#qmsg').textContent=questMsg(s.days.length);
+  };
+  $('#shtext').onclick=function(){ track('copy_share'); copyText(shareText(), this) };
+  $('#shimg').onclick=function(){ makeImage(this) };
+  $('#pw').onclick=function(){ track('paywall_click'); var pv=$('#pv'); pv.hidden=false; $('#wl').hidden=false; try{ pv.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth', block:'start'}) }catch(e){} };
+  $('#wlgo').onclick=function(){
+    var email=$('#em').value.trim(), msg=$('#wlmsg');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ msg.textContent=t('wl_invalid'); return }
+    var wurl=CONFIG.waitlistEndpoint||CONFIG.endpoint;
+    if(!wurl){ msg.textContent=t('wl_noconn'); return }
+    msg.textContent=t('saving');
+    fetch(wurl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({type:'waitlist',email:email,variant:variant(),lang:LANG,sid:SID,ts:new Date().toISOString(),src:qp('utm_source'),camp:qp('utm_campaign'),ad:qp('utm_content')})})
+      .then(function(){ track('waitlist_submit'); msg.textContent=t('wl_ok') })
+      .catch(function(){ msg.textContent=t('wl_fail') });
+  };
+}
+
+/* ===== 分享图（符纸卡）===== */
+function wrapLines(ctx,text,maxW){
+  var zh=(LANG==='zh'), words=zh?text.split(''):text.split(' '), sep=zh?'':' ', lines=[], cur='';
+  words.forEach(function(w){ var tt=cur?cur+sep+w:w; if(ctx.measureText(tt).width>maxW&&cur){lines.push(cur);cur=w}else{cur=tt} });
+  if(cur) lines.push(cur); return lines;
+}
+function imgSample(){
+  var z=t('img_who')+t('img_weak')+t('img_quest')+t('img_class','')+t('img_find')+t('gap_both','')+t('gap_swap','','')+t('gap_b','')+t('gap_a','')+t('gap_none','','');
+  ORDER.forEach(function(k){ z+=ZEL[k].name+ZEL[k].quest.title });
+  Object.keys(ZREL).forEach(function(k){ z+=ZREL[k].title+ZREL[k].good });
+  Object.keys(ZDM).forEach(function(k){ z+=ZDM[k].en+ZDM[k].tag });
+  return z;
+}
+function fitFont(ctx,text,maxW,size,family,weight){
+  var s=size; for(;;){ ctx.font=weight+' '+s+'px '+family; if(ctx.measureText(text).width<=maxW||s<=30) break; s-=2 } return s;
+}
+function drawSeal(ctx,x,y,s,ch){
+  ctx.save(); ctx.translate(x+s/2,y+s/2); ctx.rotate(-0.08);
+  ctx.fillStyle='#1B1209'; ctx.fillRect(-s/2+8,-s/2+8,s,s);
+  ctx.fillStyle='#E5362F'; ctx.fillRect(-s/2,-s/2,s,s);
+  ctx.strokeStyle='rgba(255,246,232,.75)'; ctx.lineWidth=Math.max(3,s*0.02); ctx.strokeRect(-s/2+s*0.06,-s/2+s*0.06,s*0.88,s*0.88);
+  ctx.fillStyle='#FFF6E8'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font='400 '+Math.round(s*0.7)+'px "Ma Shan Zheng","Kaiti SC",serif'; ctx.fillText(ch,0,s*0.05); ctx.restore();
+}
+function makeImage(btn){
+  var v=variant(), me=STATE.me, pa=(v==='partner'&&STATE.partner)?STATE.partner:null;
+  var zh=(LANG==='zh'), CJK='"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif', DW=zh?900:400;
+  var D=zh?CJK:'"Dela Gothic One","Arial Black",Arial,sans-serif', M=zh?'"Space Mono",'+CJK:'"Space Mono",Menlo,monospace', B=zh?'"Hanken Grotesk",'+CJK:'"Hanken Grotesk",Arial,sans-serif';
+  var loads=[document.fonts.load('400 60px "Dela Gothic One"','A'),document.fonts.load('700 28px "Space Mono"','A'),document.fonts.load('500 40px "Hanken Grotesk"','A'),document.fonts.load('400 80px "Ma Shan Zheng"','癸')];
+  if(zh){ var zs=imgSample(); loads.push(document.fonts.load('900 60px "Noto Sans SC"',zs), document.fonts.load('700 28px "Noto Sans SC"',zs), document.fonts.load('500 40px "Noto Sans SC"',zs)) }
+  Promise.all(loads).catch(function(){}).then(function(){
+    var W=1080,H=1350, c=document.createElement('canvas'); c.width=W; c.height=H; var x=c.getContext('2d');
+    x.fillStyle='#0A0710'; x.fillRect(0,0,W,H);
+    x.fillStyle='#E5362F'; x.fillRect(66,66,960,1230);
+    x.fillStyle='#EFD04A'; x.fillRect(48,48,960,1230);
+    x.fillStyle='rgba(27,18,9,.12)'; for(var yy=60;yy<1270;yy+=14){ for(var xx=60;xx<1000;xx+=14){ x.fillRect(xx,yy,2,2) } }
+    x.textBaseline='alphabetic'; x.textAlign='left';
+    x.fillStyle='#1B1209'; x.font='700 28px '+M; if(x.letterSpacing!==undefined) x.letterSpacing='5px'; x.fillText('ELEMENTAL MATCH',92,110); if(x.letterSpacing!==undefined) x.letterSpacing='0px';
+    if(pa){
+      var pr=pairing(me,pa), title=R(pr.rel).title.toUpperCase();
+      drawSeal(x,100,160,280,me.dm); drawSeal(x,640,160,280,pa.dm);
+      x.fillStyle='#1B1209'; x.textAlign='center'; x.font='400 110px '+D; x.fillText('×',540,360); x.textAlign='left';
+      fitFont(x,title,870,104,D,DW); x.fillStyle='#1B1209'; x.fillText(title,92,590);
+      x.fillStyle='#4C3B10'; x.font='700 30px '+M; x.fillText((DX(me.dm).en+' × '+DX(pa.dm).en).toUpperCase(),92,652);
+      x.fillStyle='#1B1209'; x.font='500 40px '+B;
+      wrapLines(x,R(pr.rel).good,870).slice(0,3).forEach(function(l,i){x.fillText(l,92,740+i*56)});
+      x.fillStyle='#1B1209'; x.fillRect(92,930,870,290);
+      x.fillStyle=EL[pr.gap.el].hex; x.fillRect(92,930,14,290);
+      x.fillStyle='#EFD04A'; x.font='700 24px '+M; x.fillText(t('img_who'),132,980);
+      x.fillStyle='#F4EFE6'; x.font='500 34px '+B;
+      wrapLines(x,pr.gap.text,800).slice(0,4).forEach(function(l,i){x.fillText(l,132,1032+i*48)});
+    }else{
+      var nm=DX(me.dm).en.toUpperCase();
+      drawSeal(x,100,150,260,me.dm);
+      fitFont(x,nm,580,92,D,DW); x.fillStyle='#1B1209'; x.fillText(nm,400,290);
+      x.fillStyle='#4C3B10'; x.font='700 34px '+M; x.fillText(t('img_class',DX(me.dm).tag).toUpperCase(),400,350);
+      x.fillStyle='#1B1209'; x.fillRect(92,440,870,500);
+      ORDER.forEach(function(k,i){
+        var y=480+i*88;
+        x.fillStyle='#F4EFE6'; x.font='700 32px '+M; x.fillText(E(k).name.toUpperCase(),122,y+32);
+        for(var j=0;j<me.total;j++){ x.fillStyle=j<me.counts[k]?EL[k].hex:'#2E2240'; x.fillRect(340+j*56,y,46,42) }
+        x.textAlign='right'; x.fillStyle=k===me.thin?'#FF6B5E':'#F4EFE6'; x.font='700 34px '+M; x.fillText(String(me.counts[k]),940,y+34); x.textAlign='left';
+        if(k===me.thin){ x.fillStyle='#FF6B5E'; x.font='700 24px '+M; x.fillText(t('img_weak'),340+me.total*56+12,y+31) }
+      });
+      x.fillStyle='#A5201A'; x.font='700 28px '+M; x.fillText(t('img_quest'),92,1020);
+      var qt=E(me.thin).quest.title.toUpperCase(); var sz=fitFont(x,qt,870,56,D,DW); x.fillStyle='#1B1209';
+      wrapLines(x,qt,870).slice(0,2).forEach(function(l,i){x.fillText(l,92,1090+i*(sz+14))});
+    }
+    x.fillStyle='#4C3B10'; x.font='700 26px '+M; x.fillText(t('img_find')+(CONFIG.shareUrl||location.host||'ELEMENTAL MATCH').toUpperCase(),92,1250);
+    var url=c.toDataURL('image/png'); track('image_made');
+    $('#shout').innerHTML='<img class="share-img" alt="'+t('sh_alt')+'" src="'+url+'"><p class="fine" style="margin-top:10px">'+t('sh_hold')+'</p>';
+  });
+}
+
+/* ===== 表单与变体切换 ===== */
+var zhFontOn=false;
+function loadZhFont(){
+  if(zhFontOn) return; zhFontOn=true;
+  try{ var l=document.createElement('link'); l.rel='stylesheet'; l.href='https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap'; document.head.appendChild(l) }catch(e){}
+}
+function applyStatic(){
+  var r=document.documentElement; r.setAttribute('data-lang',LANG); r.setAttribute('lang',LANG==='zh'?'zh-Hans':'en');
+  if(LANG==='zh') loadZhFont();
+  $$('[data-i]').forEach(function(el){ el.textContent=t(el.getAttribute('data-i')) });
+  $$('[data-ih]').forEach(function(el){ el.innerHTML=t(el.getAttribute('data-ih')) });
+  $('#langl').textContent=t('lang_btn');
+  paintSnd();
+}
+function applyVariant(){
+  var v=variant(), c=C(v), h=location.hash.replace('#','');
+  $('#h1').textContent=c.h1; $('#sub').textContent=c.sub; $('#go').textContent=c.go; $('#lg1').textContent=c.legend;
+  $$('[data-only]').forEach(function(el){ el.hidden = el.getAttribute('data-only')!==v });
+  var sw=$('#switch'); sw.hidden = (h==='partner'||h==='element');
+  sw.innerHTML=t('previewing',t(v==='partner'?'v_partner':'v_element'))+'<a id="swlink" href="'+(v==='partner'?'#element':'#partner')+'">'+t('switch_to',t(v==='partner'?'v_element':'v_partner'))+'</a>';
+}
+function loadSample(){
+  var v=variant();
+  STATE.me=calc('1992-03-18','14:00'); STATE.partner = v==='partner'?calc('1989-10-05','09:00'):null; STATE.sample=true;
+}
+var started=false;
+$('#f').addEventListener('input',function(){ if(!started){started=true; track('form_start')} });
+$('#f').addEventListener('submit',function(e){
+  e.preventDefault();
+  var err=$('#err'), d1=$('#d1').value, d2=$('#d2').value;
+  function bad(msg){err.textContent=msg; err.hidden=false; sfx.knock()}
+  err.hidden=true;
+  if(typeof Solar==='undefined') return bad(t('err_engine'));
+  if(!d1) return bad(t('err_dob'));
+  if(d1<'1920-01-01'||d1>today()) return bad(t('err_range'));
+  if(variant()==='partner' && d2 && (d2<'1920-01-01'||d2>today())) return bad(t('err_range2'));
+  STATE.me=calc(d1,$('#t1').value);
+  STATE.partner=(variant()==='partner'&&d2)?calc(d2,$('#t2').value):null;
+  STATE.sample=false; track('calc',{has_partner:!!STATE.partner, has_time:STATE.me.known});
+  render();
+  sfx.reveal(STATE.me);
+  var first=$('#out').firstElementChild; if(first){ first.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth', block:'start'}) }
+});
+window.addEventListener('hashchange',function(){ applyVariant(); if(STATE.sample){loadSample()} else if(variant()==='element'){STATE.partner=null} render(); track('view') });
+
+(function init(){
+  var m=today(); $('#d1').max=m; $('#d2').max=m;
+  $('#ring').innerHTML=bagua();
+  sndInitUi();
+  $('#lang').addEventListener('click',function(){
+    LANG=(LANG==='zh'?'en':'zh'); store('em_lang_v1',LANG); applyStatic(); applyVariant(); render(); track('lang_toggle');
+  });
+  applyStatic(); applyVariant();
+  if(typeof Solar==='undefined'){ $('#out').innerHTML='<p class="err">'+t('err_engine')+'</p>'; return }
+  loadSample(); render(); track('view');
+})();
+</script>

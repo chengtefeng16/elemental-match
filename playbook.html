@@ -1,0 +1,727 @@
+<title>合伙人匹配</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&text=%E7%94%B2%E4%B9%99%E4%B8%99%E4%B8%81%E6%88%8A%E5%B7%B1%E5%BA%9A%E8%BE%9B%E5%A3%AC%E7%99%B8%E5%AD%90%E4%B8%91%E5%AF%85%E5%8D%AF%E8%BE%B0%E5%B7%B3%E5%8D%88%E6%9C%AA%E7%94%B3%E9%85%89%E6%88%8C%E4%BA%A5%E6%9C%A8%E7%81%AB%E5%9C%9F%E9%87%91%E6%B0%B4%E5%90%88&display=swap">
+<style>
+
+/* Layout: a dark void with a slow-turning bagua ring behind the title. Characters are dealt as talisman-paper cards
+   (yellow, halftone, zigzag edges, red stamp). Dark HUD panels hold the stats. The side quest is a dashed quest-board panel.
+   Single look by choice: purple-black ground, talisman yellow, cinnabar red, five neon element colors. Glitch magenta/cyan only on the title. */
+:root{
+  --void:#0A0710; --void2:#150E20; --void3:#1F1530; --line:#3A2B52;
+  --fg:#F4EFE6; --muted:#A79CBC;
+  --paper:#EFD04A; --ink:#1B1209; --ink-soft:#4C3B10;
+  --seal:#E5362F; --seal-ink:#A5201A; --on-seal:#FFF6E8;
+  --wood:#38F2A0; --fire:#FF5A36; --earth:#F2B134; --metal:#C9D6E8; --water:#3D8BFF;
+  --glitch-a:#FF2E93; --glitch-b:#29E3F5; --focus:#29E3F5; --warn:#FF6B5E;
+  --font-display:'Dela Gothic One','Arial Black','Helvetica Neue',Arial,sans-serif;
+  --font-mono:'Space Mono','SFMono-Regular',Menlo,Consolas,monospace;
+  --font-body:'Hanken Grotesk','Avenir Next','Helvetica Neue',Arial,sans-serif;
+  --font-han:'Ma Shan Zheng','Kaiti SC','STKaiti','KaiTi','Noto Serif CJK SC',serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+::selection{background:var(--seal); color:var(--on-seal)}
+body{
+  background:var(--void); color:var(--fg);
+  font:400 16px/1.55 var(--font-body);
+  padding-block:18px 64px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  overflow-x:clip;
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:50; opacity:.08;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.wrap{max-width:700px; margin-inline:auto; display:flex; flex-direction:column; gap:44px}
+h1,h2,h3,p{margin:0}
+button,input{font:inherit; color:inherit}
+:focus-visible{outline:3px solid var(--focus); outline-offset:3px}
+
+/* top bar */
+.brand{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+.brand .l{display:flex; align-items:center; gap:10px}
+.brand .mark{width:32px; height:32px; display:grid; place-items:center; background:var(--seal); color:var(--on-seal); transform:rotate(-5deg); font:400 22px/1 var(--font-han); box-shadow:3px 3px 0 var(--paper)}
+.brand b{font:400 1rem var(--font-display); letter-spacing:.02em; text-transform:uppercase}
+.st{font:700 .72rem var(--font-mono); letter-spacing:.16em; color:var(--paper); text-transform:uppercase}
+.st::after{content:"_"; animation:blink 1s steps(1) infinite}
+.brand .r{display:flex; align-items:center; flex-wrap:wrap; gap:10px 12px}
+.snd{display:inline-flex; align-items:center; gap:8px; min-height:40px; padding:0 12px; background:transparent; color:var(--fg); border:2px solid var(--fg); font:700 .72rem var(--font-mono); letter-spacing:.12em; text-transform:uppercase; cursor:pointer}
+.snd:hover{border-color:var(--paper); color:var(--paper)}
+.snd[aria-pressed="true"]{background:var(--paper); color:var(--ink); border-color:var(--paper)}
+.snd .eq{display:inline-flex; align-items:flex-end; gap:2px; height:12px}
+.snd .eq b{display:block; width:3px; height:4px; background:currentColor}
+.snd[aria-pressed="true"] .eq b{animation:eq .7s ease-in-out infinite alternate}
+.snd[aria-pressed="true"] .eq b:nth-child(2){animation-delay:.15s}
+.snd[aria-pressed="true"] .eq b:nth-child(3){animation-delay:.3s}
+@keyframes eq{from{height:3px} to{height:12px}}
+@keyframes blink{50%{opacity:0}}
+
+/* hero */
+.hero{position:relative; display:flex; flex-direction:column; gap:16px}
+.ring{position:absolute; right:0; top:-26px; width:min(100%,520px); aspect-ratio:1; overflow:hidden; color:var(--paper); opacity:.2; pointer-events:none; z-index:0}
+.ring svg{width:100%; height:100%; animation:spin 160s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hero > *:not(.ring){position:relative; z-index:1}
+.hero h1{
+  font:400 clamp(1.7rem,7.6vw,3.3rem)/1.05 var(--font-display); text-transform:uppercase; text-wrap:balance;
+  text-shadow:2px 0 rgba(255,46,147,.6), -2px 0 rgba(41,227,245,.6);
+  animation:glitch 7s steps(1) infinite;
+}
+@keyframes glitch{
+  0%,90%,100%{transform:none; text-shadow:2px 0 rgba(255,46,147,.6), -2px 0 rgba(41,227,245,.6)}
+  91%{transform:translateX(-3px) skewX(-4deg); text-shadow:6px 0 var(--glitch-a), -6px 0 var(--glitch-b)}
+  93%{transform:translateX(3px); text-shadow:-5px 0 var(--glitch-a), 5px 0 var(--glitch-b)}
+  95%{transform:none; text-shadow:2px 0 rgba(255,46,147,.6), -2px 0 rgba(41,227,245,.6)}
+}
+.sub{color:var(--muted); font-size:1.04rem; max-width:50ch}
+
+/* form */
+form{display:flex; flex-direction:column; gap:22px; margin-top:8px}
+fieldset{margin:0; min-width:0; border:2px solid var(--paper); background:var(--void2); padding:20px 16px 16px; box-shadow:5px 5px 0 var(--seal); display:flex; flex-direction:column; gap:12px}
+legend{font:700 .75rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; background:var(--paper); color:var(--ink); padding:4px 10px; margin-left:-2px}
+.hint{font:400 .8rem var(--font-mono); color:var(--muted)}
+.row{display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:12px}
+label{display:flex; flex-direction:column; gap:6px; font:700 .68rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); min-width:0}
+input[type=date], input[type=time], input[type=email]{
+  background:#0B0713; border:2px solid var(--line); border-radius:0; padding:0 12px; min-height:48px; width:100%;
+  color:var(--fg); font:500 1rem var(--font-mono); text-transform:none; letter-spacing:0;
+}
+input:hover{border-color:var(--muted)}
+input:focus-visible{border-color:var(--paper)}
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:52px; padding:0 22px;
+  border:2px solid var(--paper); background:var(--paper); color:var(--ink);
+  font:700 .88rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase; cursor:pointer;
+  box-shadow:4px 4px 0 var(--seal); transition:transform .08s, box-shadow .08s;
+}
+.btn:hover{transform:translate(-1px,-1px); box-shadow:5px 5px 0 var(--seal)}
+.btn:active{transform:translate(3px,3px); box-shadow:1px 1px 0 var(--seal)}
+.btn:disabled{opacity:.55; cursor:default; transform:none; box-shadow:none}
+.btn.ghost{background:transparent; color:var(--fg); border-color:var(--fg); box-shadow:none}
+.btn.ghost:hover{background:var(--fg); color:var(--void); transform:none}
+.btn.sm{min-height:44px; padding:0 16px; font-size:.76rem}
+#go::before{content:"\25B6"; font-size:.8em}
+.btn-row{display:flex; gap:12px; flex-wrap:wrap}
+.err{color:var(--warn); font:700 .85rem var(--font-mono)}
+.fine{font:400 .78rem/1.5 var(--font-mono); color:var(--muted); max-width:62ch}
+
+/* results */
+.result{display:flex; flex-direction:column; gap:30px}
+.sample-tag{align-self:flex-start; font:700 .72rem var(--font-mono); letter-spacing:.08em; text-transform:uppercase; border:2px dashed var(--paper); color:var(--paper); padding:5px 12px}
+.stage{display:flex; align-items:center; gap:12px; font:700 .72rem var(--font-mono); letter-spacing:.16em; text-transform:uppercase; color:var(--paper)}
+.stage::after{content:""; flex:1; height:2px; opacity:.6; background:repeating-linear-gradient(90deg, var(--paper) 0 8px, transparent 8px 14px)}
+
+/* talisman card */
+.card{
+  position:relative; display:flex; flex-direction:column; gap:20px; padding:32px 18px 30px; color:var(--ink);
+  background-color:var(--paper); background-image:radial-gradient(rgba(27,18,9,.15) 1px, transparent 1.3px); background-size:7px 7px;
+  box-shadow:6px 6px 0 var(--seal); animation:deal .55s cubic-bezier(.2,.9,.3,1.15) both;
+}
+.card + .card{animation-delay:.12s}
+.card::before, .card::after{content:""; position:absolute; left:0; right:0; height:10px; background-repeat:repeat-x}
+.card::before{top:0; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='10'%3E%3Cpolygon points='0,0 20,0 10,10' fill='%230A0710'/%3E%3C/svg%3E")}
+.card::after{bottom:0; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='10'%3E%3Cpolygon points='0,10 20,10 10,0' fill='%230A0710'/%3E%3C/svg%3E")}
+@keyframes deal{from{opacity:0; transform:translateY(16px) rotate(1.2deg)} to{opacity:1; transform:none}}
+.hdr{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap}
+.tagline{font:700 .72rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; background:var(--ink); color:var(--paper); padding:4px 9px}
+.sticker{font:700 .72rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase; border:2px solid var(--ink); padding:3px 8px; transform:rotate(2deg)}
+.ident{display:flex; gap:16px; align-items:center}
+.seal{
+  flex:none; width:96px; height:96px; display:grid; place-items:center; padding-bottom:6px; background:var(--seal); color:var(--on-seal);
+  font:400 72px/1 var(--font-han); transform:rotate(-5deg);
+  box-shadow:inset 0 0 0 3px var(--seal), inset 0 0 0 5px rgba(255,246,232,.75), 4px 4px 0 var(--ink);
+  animation:stamp .5s .25s cubic-bezier(.2,.9,.3,1.3) both;
+}
+@keyframes stamp{from{transform:rotate(-5deg) scale(1.6); opacity:0} to{transform:rotate(-5deg) scale(1); opacity:1}}
+.ident h2{font:400 clamp(1.45rem,6vw,2.1rem)/1.04 var(--font-display); text-transform:uppercase}
+.nm-sub{font:700 .76rem var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px}
+.essence{font-size:1.08rem; font-weight:500}
+
+.pillars{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px}
+.pillar{display:flex; flex-direction:column; gap:4px; min-width:0}
+.pillar .cap{font:700 .6rem var(--font-mono); letter-spacing:.08em; text-transform:uppercase; text-align:center; color:var(--ink-soft); padding:2px 0}
+.pillar.dm .cap{background:var(--seal-ink); color:#fff}
+.tile{height:64px; display:grid; place-items:center; padding-bottom:4px; background:var(--ink); color:var(--c); font:400 2.3rem/1 var(--font-han); text-shadow:0 0 14px color-mix(in srgb, var(--c) 55%, transparent)}
+.tile.br{height:50px; font-size:1.7rem; background:#2B2013}
+.pillar.dm .tile:not(.br){box-shadow:0 0 0 3px var(--seal-ink)}
+.tile.unk{background:transparent; border:2px dashed var(--ink-soft); color:var(--ink-soft); text-shadow:none; font:700 1.1rem var(--font-mono)}
+
+.hud{background:var(--ink); color:var(--fg); padding:14px 12px; display:flex; flex-direction:column; gap:12px}
+.hud-t{display:flex; justify-content:space-between; font:700 .66rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--paper)}
+.bars{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px}
+.bar{display:grid; grid-template-columns:5.4rem minmax(0,1fr) 1.3rem; align-items:center; gap:10px}
+.bar .el{display:flex; align-items:baseline; gap:7px; font:700 .78rem var(--font-mono); letter-spacing:.05em; text-transform:uppercase}
+.bar .el .han{font:400 1.3rem/1 var(--font-han); color:var(--c)}
+.pips{display:flex; gap:4px; min-width:0; justify-self:start; width:min(100%, calc(var(--n,8) * 26px))}
+.pip{flex:1 1 0; min-width:0; height:16px; background:#2E2240}
+.pip.on{background:var(--c); box-shadow:0 0 10px color-mix(in srgb, var(--c) 70%, transparent); animation:pip .35s both; animation-delay:calc(var(--r, 0) * 220ms + var(--i) * 60ms + .9s)}
+@keyframes pip{from{opacity:0; transform:scaleY(.2)} to{opacity:1; transform:none}}
+.bar .n{font:700 .9rem var(--font-mono); text-align:right; font-variant-numeric:tabular-nums}
+.bar.thin .pips{outline:2px dashed var(--warn); outline-offset:3px}
+.bar.thin .n{color:var(--warn)}
+.weak{display:flex; gap:10px; align-items:center; flex-wrap:wrap; font:700 .72rem var(--font-mono); letter-spacing:.06em; text-transform:uppercase}
+.weak b{background:var(--warn); color:var(--ink); padding:2px 8px}
+
+.bd{display:grid; grid-template-columns:repeat(auto-fit, minmax(230px,1fr)); gap:16px}
+.bd h3{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:5px; font:700 .72rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase}
+.bd h3 i, .pair-two h3 i{font-style:normal; background:var(--ink); color:var(--paper); padding:2px 8px}
+.bd h3 i.bad, .pair-two h3 i.bad{background:var(--seal-ink); color:#fff}
+.bd .loud{grid-column:1/-1}
+
+/* pairing card */
+.pair-seals{display:flex; align-items:center; gap:16px}
+.pair-seals .seal{width:72px; height:72px; font-size:52px; animation:none}
+.pair-seals .x{font:400 1.6rem var(--font-display)}
+.card h2.big{font:400 clamp(1.6rem,6.4vw,2.4rem)/1.04 var(--font-display); text-transform:uppercase}
+.pair-two{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:16px}
+.pair-two h3{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:5px; font:700 .72rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase}
+.gap{background:var(--ink); color:var(--fg); border-left:6px solid var(--c, var(--seal)); padding:12px 14px; display:flex; flex-direction:column; gap:4px}
+.gap-t{font:700 .66rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--paper)}
+.pact-t{font:700 .72rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase; margin-bottom:8px}
+.pair-rules{margin:0; padding:0; list-style:none; counter-reset:r; display:flex; flex-direction:column; gap:10px}
+.pair-rules li{counter-increment:r; display:grid; grid-template-columns:28px minmax(0,1fr); gap:10px; align-items:start}
+.pair-rules li::before{content:counter(r); display:grid; place-items:center; height:28px; background:var(--ink); color:var(--paper); font:700 .8rem var(--font-mono)}
+.card .btn{background:var(--ink); color:var(--paper); border-color:var(--ink); box-shadow:4px 4px 0 var(--seal-ink)}
+.card .btn:hover{box-shadow:5px 5px 0 var(--seal-ink)}
+.card .btn:active{box-shadow:1px 1px 0 var(--seal-ink)}
+
+/* dark panels: quest, next step, locked */
+.panel{background:var(--void2); border:2px solid var(--paper); padding:20px 18px; display:flex; flex-direction:column; gap:14px}
+.panel.quest{border-style:dashed; box-shadow:6px 6px 0 var(--void3)}
+.panel h2{font:400 clamp(1.3rem,5vw,1.8rem)/1.08 var(--font-display); text-transform:uppercase}
+.kicker{display:flex; align-items:center; gap:10px; flex-wrap:wrap; font:700 .72rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--paper)}
+.kicker b{background:var(--seal); color:var(--on-seal); padding:2px 8px}
+.panel .act{font-size:1.05rem}
+.panel .why, .panel .ask{color:var(--muted)}
+.panel .why b, .panel .ask b{color:var(--fg)}
+.log{display:flex; flex-direction:column; gap:12px}
+.xp{display:flex; justify-content:space-between; gap:10px; font:700 .72rem var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--paper)}
+.xpbar{position:relative; height:10px; background:#2E2240}
+.xpfill{position:absolute; inset:0 auto 0 0; width:calc(var(--p, 0) * 1%); background:var(--c); box-shadow:0 0 12px var(--c); transition:width .4s}
+.dots{display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:6px; max-width:340px}
+.dot{aspect-ratio:1; max-height:44px; display:grid; place-items:center; border:2px solid var(--muted); background:transparent; font-style:normal}
+.dot::before{content:attr(data-n); font:700 .75rem var(--font-mono); color:var(--muted)}
+.dot.on{background:var(--c); border-color:var(--c); box-shadow:0 0 10px color-mix(in srgb, var(--c) 70%, transparent)}
+.dot.on::before{color:var(--ink)}
+.msg{font:700 .78rem var(--font-mono); color:var(--muted); letter-spacing:.04em}
+
+.share{display:flex; flex-direction:column; gap:14px}
+.share-img{max-width:min(100%,360px); display:block; border:2px solid var(--paper); box-shadow:5px 5px 0 var(--seal)}
+.fallback{width:100%; min-height:110px; background:var(--void2); border:2px solid var(--line); padding:10px; font:400 .85rem var(--font-mono); color:var(--fg)}
+
+.locked{border:2px solid var(--line); background:repeating-linear-gradient(135deg, #150E20 0 10px, #19102A 10px 20px); padding:20px 18px; display:flex; flex-direction:column; gap:12px}
+.locked h2{font:400 clamp(1.25rem,5vw,1.7rem)/1.1 var(--font-display); text-transform:uppercase}
+.locked p{color:var(--muted); max-width:56ch}
+.locked .kicker b{background:var(--muted); color:var(--void)}
+.waitlist{display:flex; flex-direction:column; gap:10px}
+.waitlist .rowf{display:flex; gap:12px; flex-wrap:wrap}
+.waitlist input[type=email]{flex:1 1 220px; min-width:0}
+
+footer{display:flex; flex-direction:column; gap:10px; border-top:2px dashed var(--line); padding-top:18px}
+footer p{font:400 .78rem/1.55 var(--font-mono); color:var(--muted); max-width:70ch}
+footer p b{color:var(--fg)}
+.preview-switch a{color:var(--paper)}
+
+/* unlock preview */
+.pv{display:flex; flex-direction:column; gap:14px; padding-top:6px; border-top:2px dashed var(--line)}
+.pv h3{font:700 .72rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--paper)}
+.pv .say{border:2px dashed var(--line); padding:12px 14px; color:var(--fg)}
+.pv .say span{display:block; font:700 .66rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--paper); margin-bottom:4px}
+.pv ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px}
+.pv ul.q li{display:grid; grid-template-columns:20px minmax(0,1fr); gap:6px}
+.pv ul.q li::before{content:"\25B8"; color:var(--paper)}
+.pv .cells{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px}
+.pv .cell{background:var(--void); border-left:6px solid var(--c, var(--paper)); padding:10px 12px; display:flex; flex-direction:column; gap:3px}
+.pv .cell b{font:700 .66rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--paper)}
+.pv ul.lk li{display:flex; gap:10px; align-items:center; padding:10px 12px; border:2px solid var(--line); color:var(--muted)}
+.pv ul.lk li::before{content:"\1F512"; font-size:.9rem}
+@media (max-width:420px){
+  .st{display:none}
+  .brand b{font-size:.82rem}
+  .snd{padding:0 8px; gap:6px; letter-spacing:.04em; font-size:.66rem}
+  .brand .l{gap:8px}
+  .seal{width:80px; height:80px; font-size:60px}
+  .bar{grid-template-columns:4.9rem minmax(0,1fr) 1.2rem; gap:8px}
+  .card{padding-inline:14px}
+  .panel, .locked{padding-inline:14px}
+  .row{grid-template-columns:1fr}
+}
+/* Chinese: swap in a CJK display/body stack (loaded only when needed) */
+:root[data-lang="zh"]{
+  --font-display:'Noto Sans SC','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  --font-mono:'Space Mono','Noto Sans SC','PingFang SC','Microsoft YaHei',monospace;
+  --font-body:'Hanken Grotesk','Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+}
+:root[data-lang="zh"] :is(.brand b,.hero h1,.ident h2,.card h2.big,.panel h2,.locked h2,.pair-seals .x){font-weight:900}
+:root[data-lang="zh"] :is(.hero h1,.ident h2,.card h2.big,.panel h2,.locked h2){line-height:1.25}
+:root[data-lang="zh"] *{letter-spacing:.04em!important}
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{animation:none!important; transition:none!important}
+}
+
+/* ---- 中文 + 合伙人匹配（三幕）---- */
+:root{
+  --font-display:'Noto Sans SC','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  --font-mono:'Space Mono','Noto Sans SC','PingFang SC','Microsoft YaHei',monospace;
+  --font-body:'Hanken Grotesk','Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+  --amber:#F2B134;
+}
+:root *{letter-spacing:.03em!important}
+.brand b,.hero h1,.panel h2,.card h2{font-weight:900; line-height:1.25}
+.hero h1{font-size:clamp(1.7rem,7vw,2.8rem); text-transform:none}
+.q{background:var(--void2); border:2px solid var(--line); padding:16px 14px; display:flex; flex-direction:column; gap:12px}
+.q h3{font:700 1.08rem/1.55 var(--font-body)}
+.q .help{color:var(--muted); font-size:.9rem}
+.ab{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px}
+.col{display:flex; flex-direction:column; gap:8px; min-width:0}
+.who{font:700 .72rem var(--font-mono); color:var(--paper); display:flex; gap:8px; align-items:center}
+.who i{font-style:normal; background:var(--paper); color:var(--ink); padding:2px 7px}
+.who.b i{background:var(--seal); color:var(--on-seal)}
+textarea,input[type=number]{
+  background:#0B0713; border:2px solid var(--line); border-radius:0; padding:10px 12px; width:100%; min-width:0;
+  color:var(--fg); font:500 1rem/1.5 var(--font-body); text-transform:none; letter-spacing:0; min-height:48px;
+}
+textarea{min-height:84px; resize:vertical}
+textarea:hover,input[type=number]:hover{border-color:var(--muted)}
+textarea:focus-visible,input[type=number]:focus-visible{border-color:var(--paper)}
+.unit{font:400 .8rem var(--font-mono); color:var(--muted)}
+.opt{position:relative; display:block; cursor:pointer; font:500 1rem/1.5 var(--font-body); text-transform:none; letter-spacing:0; color:var(--fg)}
+.opt input{position:absolute; opacity:0; inset:0; width:100%; height:100%; margin:0; cursor:pointer}
+.opt span{display:block; font:500 1rem/1.5 var(--font-body); text-transform:none; color:var(--fg); padding:11px 12px; border:2px solid var(--line); background:#0B0713; line-height:1.5}
+.opt:hover span{border-color:var(--muted)}
+.opt input:checked + span{border-color:var(--paper); background:#2A2140; box-shadow:4px 4px 0 var(--seal)}
+.opt input:focus-visible + span{outline:3px solid #6BE3FF; outline-offset:2px}
+.pills{display:flex; gap:8px; flex-wrap:wrap}
+.pills .opt{flex:1 1 90px}
+.pills .opt span{text-align:center; padding:9px 8px; font-size:.92rem}
+.rowlab{font-weight:700; margin-top:4px}
+.sync{display:flex; flex-direction:column; gap:8px; border-top:2px dashed var(--line); padding-top:12px}
+.sync .lab{color:var(--paper); font-weight:700}
+.stagebox{display:flex; flex-direction:column; gap:14px}
+.intro{color:var(--muted); max-width:62ch}
+.hint-pair{background:var(--void2); border-left:6px solid var(--paper); padding:12px 14px; display:flex; flex-direction:column; gap:4px}
+.phase{border:2px solid var(--paper); background:var(--void2); padding:14px; display:flex; flex-direction:column; gap:10px}
+.phase b{font-size:1.05rem}
+.veil{border:2px dashed var(--line); padding:14px; color:var(--muted); display:flex; align-items:center; gap:10px; min-height:84px}
+.veil::before{content:"\1F512"}
+.claim-card{background:var(--void2); border:2px solid var(--line); padding:14px; display:flex; flex-direction:column; gap:10px}
+.claim-card .claim{font-weight:700; font-size:1.02rem}
+.diag{border:2px solid var(--paper); background:var(--void2); padding:18px 14px; display:flex; flex-direction:column; gap:16px; box-shadow:6px 6px 0 var(--seal)}
+.diag h3{font:700 .78rem var(--font-mono); color:var(--paper)}
+.flags{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px}
+.flags li{display:grid; grid-template-columns:44px minmax(0,1fr); gap:10px; align-items:start}
+.flags li i{font:700 .7rem var(--font-mono); font-style:normal; text-align:center; padding:3px 0; color:var(--ink)}
+.flags li.red i{background:var(--seal); color:var(--on-seal)}
+.flags li.amber i{background:var(--amber)}
+.verdict{font:700 1.15rem/1.5 var(--font-body)}
+.counts{display:flex; gap:8px; flex-wrap:wrap; font:700 .76rem var(--font-mono)}
+.counts span{padding:3px 9px; border:2px solid var(--line)}
+pre.copyblock{margin:0; white-space:pre-wrap; word-break:break-word; background:#0B0713; border:2px solid var(--line); padding:12px; font:400 .9rem/1.6 var(--font-body); color:var(--fg)}
+.actions{display:flex; gap:12px; flex-wrap:wrap}
+.linkbtn{background:none; border:0; padding:6px 0; color:var(--paper); font:700 .8rem var(--font-mono); text-decoration:underline; cursor:pointer; min-height:44px}
+</style>
+
+<div class="wrap">
+  <div class="brand">
+    <div class="l"><span class="mark" lang="zh" aria-hidden="true">合</span><b>Elemental Match</b></div>
+    <div class="r"><span class="st">解锁版</span></div>
+  </div>
+
+  <header class="hero">
+    <div class="ring" id="ring" aria-hidden="true"></div>
+    <h1>你们能一起把这件事做成吗？</h1>
+    <p class="sub">三幕，每幕几个小场景。两个人轮流作答，答完再一起翻开。没有对错，只是看看你们心里装的，是不是同一幅画面。</p>
+    <div class="hint-pair" id="pairhint"></div>
+    <div class="actions"><button class="linkbtn" id="demo" type="button">先看一份示例结果</button><button class="linkbtn" id="reset" type="button">清空重来</button></div>
+    <details id="birth">
+      <summary style="cursor:pointer; color:var(--paper); font:700 .8rem var(--font-mono); min-height:44px; display:flex; align-items:center">修改生日（只用于开场提示）</summary>
+      <form id="f" novalidate style="margin-top:6px">
+        <fieldset><legend>你</legend><div class="row">
+          <label for="d1"><span>出生日期</span><input id="d1" type="date" min="1920-01-01" value="1992-03-18"></label>
+          <label for="t1"><span>出生时间（选填）</span><input id="t1" type="time" value="14:00"></label></div></fieldset>
+        <fieldset><legend>伙伴</legend><div class="row">
+          <label for="d2"><span>出生日期</span><input id="d2" type="date" min="1920-01-01" value="1989-10-05"></label>
+          <label for="t2"><span>出生时间（选填）</span><input id="t2" type="time" value="09:00"></label></div></fieldset>
+      </form>
+    </details>
+  </header>
+
+  <main id="out" class="result"></main>
+
+  <footer>
+    <p><b>仅供讨论和自我反思。</b>这份清单帮你们把话说开，不能预测合作成败。股权、分配和退出的约定，请在签署前请律师审阅，本页不构成法律、税务或财务建议。</p>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
+<script>
+var GEN, CTL;
+/* ===== 数据：五行 ===== */
+var ORDER = ['wood','fire','earth','metal','water'];
+var GEN = {wood:'fire', fire:'earth', earth:'metal', metal:'water', water:'wood'};   // 生
+var CTL = {wood:'earth', earth:'water', water:'fire', fire:'metal', metal:'wood'};   // 克
+var STEM = {'甲':['wood',1],'乙':['wood',0],'丙':['fire',1],'丁':['fire',0],'戊':['earth',1],'己':['earth',0],'庚':['metal',1],'辛':['metal',0],'壬':['water',1],'癸':['water',0]};
+var BRANCH = {'子':'water','丑':'earth','寅':'wood','卯':'wood','辰':'earth','巳':'fire','午':'fire','未':'earth','申':'metal','酉':'metal','戌':'earth','亥':'water'};
+
+var EL = {
+  wood:{han:'木', name:'Wood', css:'var(--wood)', hex:'#38F2A0',
+    loud:'Drive and growth. You push things forward, so watch for starting more than you finish.',
+    quest:{title:'Start small and put a date on it',
+      founder:'Write down the one thing you would start this quarter if nobody could stop you. Send it to one person and book the date of the first step.',
+      general:'Name one thing you keep waiting to start. Do the first 10 minutes of it today, then book the next step in your calendar.',
+      why:'A small first step with a date attached turns a wish into a plan.',
+      ask:'What am I waiting for permission to begin?'}},
+  fire:{han:'火', name:'Fire', css:'var(--fire)', hex:'#FF5A36',
+    loud:'Energy and visibility. People feel you in the room, so watch for promising more than you can carry.',
+    quest:{title:'Show one thing before it is ready',
+      founder:'Share one unfinished piece of work with someone outside your team and ask what they notice first.',
+      general:'Tell one person, out loud, about something you are working on or proud of.',
+      why:'Saying it aloud makes progress real to you and gives other people a way to help.',
+      ask:'Who does not know what I am working on yet?'}},
+  earth:{han:'土', name:'Earth', css:'var(--earth)', hex:'#F2B134',
+    loud:'Steadiness and trust. People rely on you, so watch for staying put when a change is due.',
+    quest:{title:'Make one rhythm that does not depend on mood',
+      founder:'Pick one weekly check-in with your partner or team. Same day, same time, 20 minutes, in the calendar.',
+      general:'Choose one small daily anchor (same time, same place) and keep it for 7 days.',
+      why:'Small repeated anchors build the steadiness this chart is light on.',
+      ask:'What would feel stable if I protected it?'}},
+  metal:{han:'金', name:'Metal', css:'var(--metal)', hex:'#C9D6E8',
+    loud:'Clarity and standards. You cut to what matters, so watch for being sharper than the moment needs.',
+    quest:{title:'Close one open loop',
+      founder:'List your open decisions. Pick the smallest one, decide it today and write the reason in one sentence.',
+      general:'Say no to one small request this week, or finish one thing you have left at 90 percent.',
+      why:'Closing one loop shows your mind that decisions are survivable.',
+      ask:'What am I keeping open because deciding feels risky?'}},
+  water:{han:'水', name:'Water', css:'var(--water)', hex:'#3D8BFF',
+    loud:'Depth and strategy. You see far, so watch for drifting across too many directions.',
+    quest:{title:'Give your thinking some quiet',
+      founder:'Block 30 minutes with no screen. Write what you would do differently if you started this business again.',
+      general:'Take a 20-minute walk without your phone, then write down one thing you noticed.',
+      why:'Unstructured quiet gives ideas room to connect.',
+      ask:'What do I need to stop and think about?'}}
+};
+
+/* ===== 数据：十种日主 ===== */
+var DM = {
+  '甲':{en:'Yang Wood', tag:'The Oak', line:'You grow in a straight line and others lean on your sense of direction.', strength:'You start things, hold a long view and stay with a plan when it gets hard.', trap:'You can stop bending. When the plan changes, you may defend it longer than it deserves.'},
+  '乙':{en:'Yin Wood', tag:'The Vine', line:'You find the way around the obstacle and you connect people without making noise about it.', strength:'You read people well and adapt quickly to what a situation needs.', trap:'You can bend too far and avoid the conversation that would clear the air.'},
+  '丙':{en:'Yang Fire', tag:'The Sun', line:'You are warm, visible and generous, and a room tends to lift when you walk in.', strength:'You energize people and you are willing to go first.', trap:'You can promise more than your week can hold, then run hot and go quiet.'},
+  '丁':{en:'Yin Fire', tag:'The Candle', line:'You work with a focused flame: precise, intense and good at what is close to you.', strength:'You notice detail and give deep attention to the people and problems you choose.', trap:'You can overthink and take criticism harder than it was meant.'},
+  '戊':{en:'Yang Earth', tag:'The Mountain', line:'You are steady and big-picture, and people feel safer with you nearby.', strength:'You hold teams together and stay calm when others rush.', trap:'You can be slow to move and stubborn once your mind is set.'},
+  '己':{en:'Yin Earth', tag:'The Field', line:'You grow things: people, projects and ideas that need patient tending.', strength:'You are practical, caring and good at turning rough material into something that works.', trap:'You can absorb too much and carry worries that belong to someone else.'},
+  '庚':{en:'Yang Metal', tag:'The Blade', line:'You decide fast and say what you mean, which saves everyone time.', strength:'You cut through noise and make hard calls without drama.', trap:'You can be blunt when the moment needed a softer edge.'},
+  '辛':{en:'Yin Metal', tag:'The Jewel', line:'You have taste and standards, and you notice the flaw in the work before anyone else does.', strength:'You raise the quality of whatever you touch.', trap:'You can slide into perfectionism and judge yourself harder than anyone else does.'},
+  '壬':{en:'Yang Water', tag:'The Ocean', line:'You think big and see how the pieces connect across a long distance.', strength:'You handle complexity and keep your eyes on the strategy.', trap:'You can scatter into too many directions and finish too few of them.'},
+  '癸':{en:'Yin Water', tag:'The Rain', line:'You are quiet, perceptive and absorb more than you show.', strength:'You pick up what is unsaid and your intuition is usually worth hearing.', trap:'You can hold back what you know and overthink before you speak.'}
+};
+
+/* ===== 数据：合伙人关系（以日主五行的生克判断）===== */
+var REL = {
+  mirror:{title:'Mirror', good:'You think alike, so you agree fast and trust each other quickly.', stuck:'You share the same blind spots, so nobody asks the awkward question.',
+    rules:['Before we commit money, we wait one night and each write down one reason not to.','Once a month we ask one outside person to challenge a decision we both liked.','We split roles on purpose: one of us owns "go", the other owns "check".']},
+  aFuelsB:{title:'You fuel them', good:'You supply ideas, energy and support, and your partner turns it into momentum.', stuck:'You can end up doing the giving while they get used to receiving.',
+    rules:['Each week we say out loud what we need back: time, credit or a decision.','We set a weekly cap on extra work either of us absorbs without asking.','Every Friday each of us names one thing we will take off the other\'s plate.']},
+  bFuelsA:{title:'They fuel you', good:'Your partner feeds you ideas, energy and backing, and you turn it into momentum.', stuck:'You can get used to receiving and miss what it costs them to keep giving.',
+    rules:['Each week we say out loud what we need back: time, credit or a decision.','We set a weekly cap on extra work either of us absorbs without asking.','Every Friday each of us names one thing we will take off the other\'s plate.']},
+  aSteersB:{title:'You steer them', good:'You bring direction and standards, and your partner gets sharper under that structure.', stuck:'Your pace can feel like pressure, and a partner under pressure tends to go quiet.',
+    rules:['The person who steers asks for the other\'s view first, before giving theirs.','We agree on three decisions the quieter partner owns without review.','When one of us feels pushed, we can call a 24-hour pause with no explanation needed.']},
+  bSteersA:{title:'They steer you', good:'Your partner brings direction and standards, and you get sharper under that structure.', stuck:'Their pace can feel like pressure, and you may start to hold your view back.',
+    rules:['The person who steers asks for the other\'s view first, before giving theirs.','We agree on three decisions the quieter partner owns without review.','When one of us feels pushed, we can call a 24-hour pause with no explanation needed.']}
+};
+
+
+/* ===== 排盘 ===== */
+function calc(dateStr, timeStr){
+  var p=dateStr.split('-').map(Number), known=!!timeStr, h=12, mi=0;
+  if(known){var t=timeStr.split(':').map(Number); h=t[0]; mi=t[1]}
+  var ec=Solar.fromYmdHms(p[0],p[1],p[2],h,mi,0).getLunar().getEightChar();
+  var stems=[ec.getYearGan(),ec.getMonthGan(),ec.getDayGan(),known?ec.getTimeGan():null];
+  var branches=[ec.getYearZhi(),ec.getMonthZhi(),ec.getDayZhi(),known?ec.getTimeZhi():null];
+  var counts={wood:0,fire:0,earth:0,metal:0,water:0}, total=0;
+  stems.forEach(function(s){if(s){counts[STEM[s][0]]++; total++}});
+  branches.forEach(function(b){if(b){counts[BRANCH[b]]++; total++}});
+  var dm=stems[2], dmEl=STEM[dm][0];
+  var parent=ORDER.filter(function(k){return GEN[k]===dmEl})[0];
+  var min=Math.min.apply(null,ORDER.map(function(k){return counts[k]}));
+  var max=Math.max.apply(null,ORDER.map(function(k){return counts[k]}));
+  var thinSet=ORDER.filter(function(k){return counts[k]===min});
+  var loudSet=ORDER.filter(function(k){return counts[k]===max});
+  var thin=thinSet.indexOf(parent)>-1?parent:thinSet[0];
+  var loud=loudSet.indexOf(dmEl)>-1?dmEl:loudSet[0];
+  return {stems:stems, branches:branches, counts:counts, total:total, dm:dm, dmEl:dmEl, thin:thin, loud:loud, known:known};
+}
+
+
+
+function $(s,r){return (r||document).querySelector(s)}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+function today(){var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;')}
+
+/* ---------- 命盘只做开场提示 ---------- */
+var ENZH={wood:'木',fire:'火',earth:'土',metal:'金',water:'水'};
+var RELZH={
+  mirror:{t:'镜像',hint:'你们想法相近，容易一致得太快。翻开第一幕时多留意：说出来的话一样，是不是心里的画面也一样。'},
+  aFuelsB:{t:'你滋养对方',hint:'你在付出，对方在接受。翻开第二幕时多留意：突然进来一笔钱、突然多一份活，各自的第一反应是什么。'},
+  bFuelsA:{t:'对方滋养你',hint:'对方在付出，你在接受。翻开第二幕时多留意：对方为这件事已经付出了什么，你看见了吗。'},
+  aSteersB:{t:'你引导对方',hint:'你定节奏，对方可能承压。翻开时多留意：谁拍板，对方有没有真正说出自己的想法。'},
+  bSteersA:{t:'对方引导你',hint:'对方定节奏，你可能把想法压着。翻开时多留意：谁拍板，你有没有说出真实想法。'}
+};
+function relOf(a,b){
+  if(a.dmEl===b.dmEl) return 'mirror';
+  if(GEN[a.dmEl]===b.dmEl) return 'aFuelsB';
+  if(GEN[b.dmEl]===a.dmEl) return 'bFuelsA';
+  if(CTL[a.dmEl]===b.dmEl) return 'aSteersB';
+  return 'bSteersA';
+}
+function paintHint(){
+  var box=$('#pairhint'), d1=$('#d1').value, d2=$('#d2').value;
+  try{
+    if(typeof Solar==='undefined'||!d1||!d2){ box.innerHTML='<p>填入两人生日，这里会给一句开场提示。没有生日也不影响下面的内容。</p>'; return }
+    var a=calc(d1,$('#t1').value), b=calc(d2,$('#t2').value), r=RELZH[relOf(a,b)];
+    box.innerHTML='<p class="kicker"><b>开场提示 · '+r.t+'</b><span>你「'+ENZH[a.thin]+'」偏弱 · 伙伴「'+ENZH[b.thin]+'」偏弱</span></p><p>'+r.hint+'</p>';
+  }catch(e){ box.innerHTML='' }
+}
+
+/* ---------- 三幕 · 场景化的问题（结构：分歧 → 模式 → 回到原点）---------- */
+var YES='说的是一件事', MID='有点不一样', NO='像是两件事';
+var ACTS=[
+ {id:'a1', t:'第一幕 · 同一幅画面', pair:true,
+  intro:'先不谈方案，只看你们脑子里的画面。玩家 1 先答，玩家 2 请先别看屏幕；然后换人，最后一起翻开。',
+  items:[
+   {id:'perc',q:'饭局上，一个不懂行的朋友问你：你们俩合伙在做什么？你会怎么回答？',help:'只写一句话，像平时说话一样。',kind:'text',sync:'把两个回答放在一起读：'},
+   {id:'imag',q:'三年后的某个周一早上，这件事已经做成了。你睁开眼睛，看到的是：',kind:'radio',opts:['手机很安静，钱照常到账，我在做自己喜欢的事','一间有十几个人的办公室，我正在开晨会','邮箱里一封收购邮件，数字让我愣了一下','一家不大的店，老客户常来，日子很稳','我还没想那么远，先做起来再说']},
+   {id:'self',q:'那个周一，你变成了什么样的人？别人会怎么介绍你？',kind:'text'},
+   {id:'scene',q:'想象一个具体的客户。他此刻在哪儿、手上在做什么、刚刚发生了什么，让他拿起手机来找你们？',help:'写成一个画面，不要写“有需求的人”。',kind:'text',sync:'把两个画面放在一起读：'},
+   {id:'wind',q:'做到第一年，账上突然进来一笔 10 万。你心里的第一个念头是：',kind:'radio',opts:['先分掉，每个人拿到手才踏实','全部留下，继续投进去做大','先还掉谁垫过的钱，再说其他','留一部分，再给自己发一点','先问问对方怎么想']},
+   {id:'night',q:'周六晚上十一点，一个客户发来急事。你最可能：',kind:'radio',opts:['马上回，当场处理','看到了，明早再回','转给对方处理','关机，周一再说']},
+   {id:'hrs',q:'接下来半年，把一周的时间摊开看，你真正能留给这件事的有几个小时？',kind:'num',unit:'小时 / 周'},
+   {id:'cash',q:'如果前半年一分钱都收不回来，你最多能拿出多少，还能睡得着？',kind:'num',unit:'元'},
+   {id:'stake',q:'这条路上，谁会替你鼓掌，谁会皱眉，谁是你不得不哄一哄的人？',help:'各写一个名字或身份就行，家人、老板、老客户都算。',kind:'text'}
+  ]},
+ {id:'a2', t:'第二幕 · 怎么一起干', pair:true,
+  intro:'画面一样，不代表能一起干。下面几个场景，看你们的分工、赚钱的方式和分钱的方式咬不咬得上。同样先后作答，最后翻开。',
+  items:[
+   {id:'roles',q:'明天有一个重要客户，只给你们 30 分钟。',kind:'multi',opts:['我','对方','我们俩都不太行'],rows:[{k:'talk',l:'谁上台，把事情讲清楚？'},{k:'hold',l:'谁在后台，把交付兜住？'},{k:'money',l:'谁把账算明白？'}]},
+   {id:'payer',q:'第一个客户掏钱的那一刻，付钱的人是：',kind:'radio',opts:['一个普通人，自己掏腰包','一家公司，走公司的钱','一个平台或渠道，替客户付','广告主或赞助方','我其实还没想清楚']},
+   {id:'why',q:'他为什么觉得这笔钱花得值？大概是多少？',kind:'text'},
+   {id:'first',q:'你心里觉得，那第一笔钱会在什么时候到账？',kind:'radio',opts:['一个月内','三个月内','半年内','一年以后','我不知道']},
+   {id:'rights',q:'来了一笔意外的大单，需要马上多招一个人。最后拍板招谁的，应该是：',kind:'radio',opts:['我','对方','我们俩一致才行','谁负责那一块，谁说了算']},
+   {id:'pct',q:'如果这个生意最终值 100 份，你觉得自己该拿几份？',kind:'num',unit:'份'},
+   {id:'exit',q:'一年后，对方平静地说：我想退出。你的第一反应是：',kind:'radio',opts:['我们早就约定好怎么处理了','先坐下来谈清楚怎么分','想办法劝他留下','很震惊，甚至有点生气']}
+  ]},
+ {id:'a3', t:'第三幕 · 回到原点', pair:false,
+  intro:'最后一幕，两个人一起答。把名字、关系和热情都拿掉，只看真实世界里已经发生的事。',
+  items:[
+   {id:'origin',q:'只剩下一个陌生的客户和他的麻烦：他最痛的是哪一件事？他今天为此付出了什么（钱、时间、情绪）？',kind:'text'}
+  ]}
+];
+var CLAIMS=['有人愿意为解决这个问题掏钱','我们两个人合起来，能把它做出来','第一批客户，我们找得到','我们能一起扛至少一年','我们对“怎么分钱”是真心接受的'];
+var SRC=['我感觉是这样','我猜的','听别人说的','我亲眼见过','有真实的钱或数字'];
+var REAL=['我亲眼见过','有真实的钱或数字'];
+var STEP={id:'step',q:'这周，一分钟之内，你们能做的第一件小事是什么？',help:'越小越好。要让事情真的动起来，第一步必须小到现在就能做。'};
+
+var V={};
+try{ V=JSON.parse(localStorage.getItem('pb_zh_v3'))||{} }catch(e){ V={} }
+function save(){ try{ localStorage.setItem('pb_zh_v3',JSON.stringify(V)) }catch(e){} }
+function g(k){return (V[k]==null?'':String(V[k])).trim()}
+function ph(a){ return V['ph_'+a]||'a' }
+
+/* ---------- 控件 ---------- */
+function ctl(it,key,opts,pill){
+  var v=V[key]||'';
+  if(it.kind==='text') return '<textarea data-k="'+key+'" rows="3" aria-label="'+esc(it.q)+'">'+esc(v)+'</textarea>';
+  if(it.kind==='num') return '<input data-k="'+key+'" type="number" inputmode="decimal" min="0" value="'+esc(v)+'" aria-label="'+esc(it.q)+'"><span class="unit">'+esc(it.unit||'')+'</span>';
+  return '<div class="'+(pill?'pills':'')+'" role="radiogroup">'+opts.map(function(o){
+    return '<label class="opt"><input type="radio" name="'+key+'" data-k="'+key+'" value="'+esc(o)+'"'+(v===o?' checked':'')+'><span>'+esc(o)+'</span></label>';
+  }).join('')+'</div>';
+}
+function whoTag(w){ return w==='a'?'<p class="who"><i>玩家 1</i></p>':'<p class="who b"><i>玩家 2</i></p>' }
+function fieldCol(it,w){
+  var h='<div class="col">'+whoTag(w);
+  if(it.kind==='multi'){
+    it.rows.forEach(function(r){ h+='<p class="rowlab">'+r.l+'</p>'+ctl(it,it.id+'.'+r.k+'_'+w,it.opts,true) });
+  } else h+=ctl(it,it.id+'_'+w,it.opts,false);
+  return h+'</div>';
+}
+function itemHtml(it,whos,reveal){
+  var h='<section class="q"><h3>'+it.q+'</h3>'+(it.help?'<p class="help">'+it.help+'</p>':'');
+  h+='<div class="ab">'+whos.map(function(w){return fieldCol(it,w)}).join('')+'</div>';
+  if(reveal&&it.sync){
+    var k=it.id+'_y', v=V[k]||'';
+    h+='<div class="sync"><p class="lab">'+it.sync+'</p><div class="pills" role="radiogroup">'+[YES,MID,NO].map(function(o){return '<label class="opt"><input type="radio" name="'+k+'" data-k="'+k+'" value="'+o+'"'+(v===o?' checked':'')+'><span>'+o+'</span></label>'}).join('')+'</div></div>';
+  }
+  return h+'</section>';
+}
+function actHtml(a){
+  var h='<p class="stage">'+a.t+'</p><div class="stagebox"><p class="intro">'+a.intro+'</p>';
+  if(a.pair){
+    var p=ph(a.id);
+    if(p==='a') h+='<div class="phase"><b>现在轮到：玩家 1</b><p>玩家 2 请先别看屏幕。凭第一反应答，不用想太久。</p><div class="actions"><button class="btn sm" data-go="'+a.id+':b" type="button">我答完了，交给玩家 2</button></div></div>';
+    if(p==='b') h+='<div class="phase"><b>现在轮到：玩家 2</b><p>玩家 1 的回答已经盖住了。凭第一反应答就好。</p><div class="actions"><button class="btn sm" data-go="'+a.id+':r" type="button">两个人都答完了，翻开对照</button></div></div>';
+    if(p==='r') h+='<div class="phase"><b>已翻开</b><p>逐题看看，两个人的回答是同一幅画面吗？有不一样的地方，先聊那里。</p><div class="actions"><button class="linkbtn" data-go="'+a.id+':a" type="button">这一幕重新作答</button></div></div>';
+    a.items.forEach(function(it){
+      var whos=p==='a'?['a']:(p==='b'?['b']:['a','b']);
+      h+=itemHtml(it,whos,p==='r');
+    });
+  } else {
+    a.items.forEach(function(it){
+      h+='<section class="q"><h3>'+it.q+'</h3><div class="col">'+ctl(it,it.id+'_z',null,false)+'</div></section>';
+    });
+    h+='<p class="stage" style="margin-top:6px">下面这些话，你们是怎么知道的？</p>';
+    CLAIMS.forEach(function(c,i){
+      var s=V['L'+i+'_s']||'', real=REAL.indexOf(s)>-1;
+      h+='<section class="claim-card"><p class="claim">“'+c+'”</p><div class="pills" role="radiogroup">'+SRC.map(function(o){return '<label class="opt"><input type="radio" name="L'+i+'_s" data-k="L'+i+'_s" value="'+o+'"'+(s===o?' checked':'')+'><span>'+o+'</span></label>'}).join('')+'</div>'
+        +(real?'<div class="col"><p class="help">是谁、哪一次、多少钱？写一句。</p><textarea data-k="L'+i+'_e" rows="2" aria-label="证据">'+esc(V['L'+i+'_e']||'')+'</textarea></div>':'')+'</section>';
+    });
+    h+='<section class="q"><h3>'+STEP.q+'</h3><p class="help">'+STEP.help+'</p><div class="col"><textarea data-k="step_z" rows="2" aria-label="第一步">'+esc(V.step_z||'')+'</textarea></div></section>';
+  }
+  return h+'</div>';
+}
+function build(){
+  var h=ACTS.map(actHtml).join('')+'<p class="stage">结果</p><div id="diag"></div>';
+  $('#out').innerHTML=h;
+  diag();
+}
+
+/* ---------- 对照与判断（文案保持平实）---------- */
+function who(v,me){ if(v==='我') return me; if(v==='对方') return me==='a'?'b':'a'; if(v==='我们俩都不太行') return 'none'; return v }
+function evaluate(){
+  var F=[], r1=ph('a1')==='r', r2=ph('a2')==='r';
+  function add(l,s,m){F.push({l:l,s:s,m:m})}
+  function pair(id){ return [g(id+'_a'),g(id+'_b')] }
+  if(r1){
+    [['perc','你们对“我们在做什么”的回答'],['scene','你们想象的那个客户时刻']].forEach(function(x){
+      var y=g(x[0]+'_y'); if(y===MID) add('amber','a1',x[1]+'有点不一样，先对齐再往下走。'); if(y===NO) add('red','a1',x[1]+'像是两件事。先停下来，弄清楚你们各自在说什么。');
+    });
+    var im=pair('imag'); if(im[0]&&im[1]&&im[0]!==im[1]) add('red','a1','三年后的画面不一样：一个人看到“'+im[0]+'”，另一个人看到“'+im[1]+'”。');
+    var wd=pair('wind'); if(wd[0]&&wd[1]&&wd[0]!==wd[1]) add('amber','a1','突然进来一笔钱，你们的第一反应不同：“'+wd[0]+'”和“'+wd[1]+'”。');
+    var ni=pair('night');
+    if(ni[0]==='转给对方处理'&&ni[1]==='转给对方处理') add('red','a1','半夜来了急事，你们都想转给对方。');
+    else if(ni[0]==='关机，周一再说'&&ni[1]==='关机，周一再说') add('amber','a1','半夜来了急事，两个人都打算关机。');
+    else if(ni[0]&&ni[1]&&((ni[0]==='马上回，当场处理')!==(ni[1]==='马上回，当场处理'))) add('amber','a1','对“半夜的急事”，一个人随叫随到，另一个人不是。');
+    var ha=parseFloat(g('hrs_a')), hb=parseFloat(g('hrs_b'));
+    if(ha>0&&hb>0&&Math.max(ha,hb)/Math.min(ha,hb)>=2) add('amber','a1','能留给这件事的时间相差 '+(Math.max(ha,hb)/Math.min(ha,hb)).toFixed(1)+' 倍（'+ha+' 与 '+hb+' 小时）。');
+    var ca=parseFloat(g('cash_a')), cb=parseFloat(g('cash_b'));
+    if(g('cash_a')&&g('cash_b')&&Math.max(ca,cb)>0&&Math.max(ca,cb)/Math.max(1,Math.min(ca,cb))>=3) add('amber','a1','能拿出来的现金相差很大（'+ca+' 与 '+cb+' 元），钱怎么出、怎么算，要提前说清楚。');
+  }
+  if(r2){
+    var rl=[['talk','上台讲'],['hold','后台兜底'],['money','算账']];
+    rl.forEach(function(x){
+      var A=who(g('roles.'+x[0]+'_a'),'a'), B=who(g('roles.'+x[0]+'_b'),'b'); if(!A||!B) return;
+      if(A==='none'&&B==='none') add('red','a2','“'+x[1]+'”这件事，你们俩都觉得自己不行，这一块是空的。');
+      else if(A==='a'&&B==='b') add('amber','a2','“'+x[1]+'”，两个人都想自己来。');
+      else if(A==='b'&&B==='a') add('red','a2','“'+x[1]+'”，两个人都以为是对方来。');
+      else if(A!==B) add('amber','a2','“'+x[1]+'”，你们对谁来做的看法不一样。');
+    });
+    var py=pair('payer'); if(py[0]&&py[1]&&py[0]!==py[1]) add('red','a2','第一个付钱的人，你们想的不一样：“'+py[0]+'”和“'+py[1]+'”。');
+    if(py[0]==='我其实还没想清楚'||py[1]==='我其实还没想清楚') add('amber','a2','有人还没想清楚谁会付钱。');
+    var fi=pair('first'); if(fi[0]&&fi[1]&&fi[0]!==fi[1]) add('amber','a2','对第一笔钱什么时候到，你们的预期不同：“'+fi[0]+'”和“'+fi[1]+'”。');
+    var rt=pair('rights');
+    if(rt[0]&&rt[1]){ var A2=who(rt[0],'a'), B2=who(rt[1],'b'); if(A2!==B2) add('red','a2','大事谁拍板，你们的想法不一致：“'+rt[0]+'”和“'+rt[1]+'”。'); }
+    var pa=parseFloat(g('pct_a')), pb=parseFloat(g('pct_b'));
+    if(g('pct_a')&&g('pct_b')&&pa+pb!==100) add('red','a2','你们各自觉得该拿的份数加起来是 '+(pa+pb)+'，不是 100。'+(pa+pb>100?'有人想要的比能分的多。':'还有一部分没有归属。'));
+    var ex=pair('exit'), AG='我们早就约定好怎么处理了';
+    if(ex[0]&&ex[1]){
+      if(ex[0]!==AG&&ex[1]!==AG) add('amber','a2','一方想退出怎么办，你们还没有共同的答案。');
+      else if((ex[0]===AG)!==(ex[1]===AG)) add('amber','a2','只有一个人觉得“早就约定好了”。');
+      if(ex[0]==='很震惊，甚至有点生气'||ex[1]==='很震惊，甚至有点生气') add('amber','a2','“有人想退出”这个场景，会让其中一个人很有感觉，值得单独聊一次。');
+    }
+  }
+  var ver=0, bad=0;
+  CLAIMS.forEach(function(c,i){ var s=g('L'+i+'_s'); if(REAL.indexOf(s)>-1){ if(g('L'+i+'_e')) ver++; else bad++ } });
+  if(bad) add('amber','a3','有 '+bad+' 句选了“亲眼见过 / 有真实数字”却没写是谁、哪一次，先当作猜的。');
+  var ans=CLAIMS.filter(function(c,i){return g('L'+i+'_s')}).length;
+  return {F:F,ver:ver,r1:r1,r2:r2,ans:ans};
+}
+var QS='最近一次，你为这件事头疼或亏钱，是哪一单？卡在哪一步？\n你现在是怎么解决的？问谁？花了多少钱？\n你为这类问题花过钱吗？花在什么上？\n别人问你最多的问题是什么？';
+var OPENER='你好，我在了解“____”这件事，不卖任何东西。想请教你最近一次遇到它的经历，只占你 10 分钟，可以吗？';
+var LAST='';
+function group(F,s){ return F.filter(function(x){return x.s===s}) }
+function flagList(F){ return '<ul class="flags">'+F.map(function(x){return '<li class="'+x.l+'"><i>'+(x.l==='red'?'重要':'留意')+'</i><span>'+esc(x.m)+'</span></li>'}).join('')+'</ul>' }
+function diag(){
+  var e=evaluate(), box=$('#diag'), h='', txt='';
+  if(!e.r1||!e.r2){
+    h='<p class="verdict">先走完第一幕和第二幕，两个人都翻开之后，这里才会出现结果。</p><p class="help" style="color:var(--muted)">'+(e.r1?'第一幕已翻开。':'第一幕还没翻开。')+(e.r2?'第二幕已翻开。':'第二幕还没翻开。')+'</p>';
+    box.innerHTML='<section class="diag">'+h+'</section>'; return;
+  }
+  var red=e.F.filter(function(x){return x.l==='red'}).length, amb=e.F.length-red, v;
+  if(e.ver<3) v='目前真正被验证过的，只有 '+e.ver+' 句（至少要有 3 句）。先别投钱、签协议或开发，下一步是去问人。';
+  else if(red>0) v='有 '+red+' 件重要的事还没对齐。先把它们谈清楚，再决定投钱或签协议。';
+  else v='没有重要的分歧，也有 '+e.ver+' 句被真实验证过。可以做一个 30 天的小试验，并约好复盘的日子。';
+  h+='<p class="verdict">'+esc(v)+'</p><div class="counts"><span>重要 '+red+'</span><span>留意 '+amb+'</span><span>验证过 '+e.ver+' / 5</span></div>';
+  txt+='【合伙人匹配结果】\n'+v+'\n';
+  [['a1','你们看到的画面'],['a2','你们怎么一起干'],['a3','你们心里有底的']].forEach(function(x){
+    var f=group(e.F,x[0]); if(!f.length) return;
+    h+='<div><h3>'+x[1]+'</h3>'+flagList(f)+'</div>'; txt+='\n'+x[1]+'\n'+f.map(function(y){return (y.l==='red'?'[重要] ':'[留意] ')+y.m}).join('\n')+'\n';
+  });
+  if(!e.F.length){ h+='<p class="help" style="color:var(--muted)">没有发现明显分歧。别急着高兴，再看看第三幕里“怎么知道的”。</p>'; }
+  var org=g('origin_z'), step=g('step_z');
+  if(org){ h+='<div><h3>你们写下的那个最痛的点</h3><p>'+esc(org)+'</p></div>'; txt+='\n最痛的点：'+org+'\n' }
+  if(step){ h+='<div><h3>这周的第一步</h3><p>'+esc(step)+'</p></div>'; txt+='\n这周的第一步：'+step+'\n' }
+  if(e.ver<3){
+    h+='<div><h3>下一步：去问人</h3><p>只问过去发生过的事，不问“你会不会用”。</p><pre class="copyblock">'+esc(QS)+'</pre><p style="margin-top:10px"><b>开场白</b>（把 ____ 换成你们的主题）</p><pre class="copyblock">'+esc(OPENER)+'</pre></div>';
+    txt+='\n去问人，问这些：\n'+QS+'\n\n开场白：'+OPENER+'\n';
+  }
+  h+='<div class="actions"><button class="btn" id="cp" type="button">复制结果</button><button class="btn ghost" id="cpall" type="button">复制全部回答</button></div><p class="msg" id="cpm" role="status"></p>';
+  box.innerHTML='<section class="diag">'+h+'</section>';
+  LAST=txt;
+  $('#cp').onclick=function(){ copy(LAST) };
+  $('#cpall').onclick=function(){ copy(LAST+'\n\n【全部回答】\n'+allAnswers()) };
+}
+function allAnswers(){
+  var o=[];
+  ACTS.forEach(function(a){ o.push('## '+a.t); a.items.forEach(function(it){
+    if(!a.pair){ o.push(it.q+'\n  '+(g(it.id+'_z')||'（空）')); return }
+    if(it.kind==='multi'){ o.push(it.q); it.rows.forEach(function(r){ o.push('  '+r.l+' 玩家1：'+(g(it.id+'.'+r.k+'_a')||'（空）')+'；玩家2：'+(g(it.id+'.'+r.k+'_b')||'（空）')) }); return }
+    o.push(it.q+'\n  玩家 1：'+(g(it.id+'_a')||'（空）')+'\n  玩家 2：'+(g(it.id+'_b')||'（空）')+(it.sync?'\n  对照：'+(g(it.id+'_y')||'（空）'):''));
+  }) });
+  CLAIMS.forEach(function(c,i){ o.push('“'+c+'”：'+(g('L'+i+'_s')||'（空）')+(g('L'+i+'_e')?'；'+g('L'+i+'_e'):'')) });
+  o.push('这周的第一步：'+(g('step_z')||'（空）'));
+  return o.join('\n');
+}
+function copy(text){
+  var m=$('#cpm');
+  function fb(){ var ta=document.createElement('textarea'); ta.className='fallback'; ta.readOnly=true; ta.value=text; $('#cp').parentNode.appendChild(ta); ta.focus(); ta.select(); try{ document.execCommand('copy'); m.textContent='已复制。' }catch(e){ m.textContent='请长按文字复制。' } }
+  try{ navigator.clipboard.writeText(text).then(function(){ m.textContent='已复制。' },fb) }catch(e){ fb() }
+}
+
+/* ---------- 示例 ---------- */
+var DEMO={ph_a1:'r',ph_a2:'r',
+ perc_a:'我们帮小餐馆老板把外卖账算清楚',perc_b:'给做生意的人做一个手机上的记账小工具',perc_y:MID,
+ imag_a:'手机很安静，钱照常到账，我在做自己喜欢的事',imag_b:'一间有十几个人的办公室，我正在开晨会',
+ self_a:'一个终于有自己时间的人',self_b:'一个带着团队的老板',
+ scene_a:'晚上十点，餐馆老板关了门，对着一堆单据发愁',scene_b:'月底，会计催他交报表，他手忙脚乱',scene_y:MID,
+ wind_a:'先分掉，每个人拿到手才踏实',wind_b:'全部留下，继续投进去做大',
+ night_a:'看到了，明早再回',night_b:'转给对方处理',
+ hrs_a:'8',hrs_b:'30',cash_a:'20000',cash_b:'80000',
+ 'roles.talk_a':'我','roles.talk_b':'我','roles.hold_a':'对方','roles.hold_b':'对方','roles.money_a':'我们俩都不太行','roles.money_b':'我们俩都不太行',
+ payer_a:'一个普通人，自己掏腰包',payer_b:'一家公司，走公司的钱',first_a:'三个月内',first_b:'一年以后',
+ rights_a:'我',rights_b:'我',pct_a:'60',pct_b:'50',exit_a:'先坐下来谈清楚怎么分',exit_b:'很震惊，甚至有点生气',
+ origin_z:'小老板每个月要花两天对账，还经常算错',
+ L0_s:'我感觉是这样',L1_s:'我猜的',L2_s:'听别人说的',L3_s:'我亲眼见过',L3_e:'我们合作过一个小项目，三周做完，没有吵架',L4_s:'我猜的',
+ step_z:'各找一位餐馆老板，问他上个月对账花了多久'};
+
+/* ---------- 事件 ---------- */
+document.addEventListener('input',function(e){ var k=e.target.getAttribute&&e.target.getAttribute('data-k'); if(!k||e.target.type==='radio') return; V[k]=e.target.value; save(); diag() });
+document.addEventListener('change',function(e){
+  var k=e.target.getAttribute&&e.target.getAttribute('data-k'); if(!k) return;
+  V[k]=e.target.value; save();
+  if(/^L\d_s$/.test(k)||/_y$/.test(k)) { var y=window.scrollY; build(); window.scrollTo(0,y) } else diag();
+});
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('[data-go]'); if(!b) return;
+  var p=b.getAttribute('data-go').split(':'); V['ph_'+p[0]]=p[1]; save(); build();
+  var sec=$$('.stage')[p[0]==='a1'?0:1]; if(sec) sec.scrollIntoView({block:'start'});
+});
+$('#demo').addEventListener('click',function(){ V=JSON.parse(JSON.stringify(DEMO)); save(); build(); $('#diag').scrollIntoView({block:'start'}) });
+$('#reset').addEventListener('click',function(){ V={}; save(); build(); window.scrollTo(0,0) });
+['d1','t1','d2','t2'].forEach(function(id){ $('#'+id).addEventListener('change',paintHint) });
+(function(){ var m=today(); $('#d1').max=m; $('#d2').max=m; paintHint(); build() })();
+</script>
