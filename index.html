@@ -324,7 +324,7 @@ footer p b{color:var(--fg)}
 /* ===== 配置：部署到你自己的域名后，把下面三项填上 ===== */
 var CONFIG = {
   shareUrl: '',          // 分享文案里的链接；留空则用当前页面地址
-  endpoint: '',          // 填 Google Apps Script 网页应用地址：埋点和邮箱都发到这里（见测试手册）
+  endpoint: 'https://script.google.com/macros/s/AKfycbzAJAyZrLcWOWqVxsXKIqw7uD9sTPb72yzjyxoJf-MtniAsw8ksU03nz6TsVIRqM_NL/exec',          // 填 Google Apps Script 网页应用地址：埋点和邮箱都发到这里（见测试手册）
   waitlistEndpoint: '',  // 等候名单接收地址（如 Formspree / Google Apps Script），收 POST JSON {email, variant}
   eventEndpoint: ''      // 埋点接收地址；留空则只推送到 window.dataLayer（GTM / GA4 可读）
 };
@@ -642,7 +642,7 @@ function variant(){var h=location.hash.replace('#',''); return h==='element'?'el
 var SID=(function(){ try{ var s=sessionStorage.getItem('em_sid'); if(!s){ s=Math.random().toString(36).slice(2,10); sessionStorage.setItem('em_sid',s) } return s }catch(e){ return Math.random().toString(36).slice(2,10) } })();
 function qp(k){ try{ return new URLSearchParams(location.search).get(k)||'' }catch(e){ return '' } }
 function track(name,data){
-  var ev={type:'event', event:'em_'+name, variant:variant(), sid:SID, ts:new Date().toISOString(), src:qp('utm_source'), camp:qp('utm_campaign'), ad:qp('utm_content'), w:window.innerWidth, lang:LANG}; for(var k in (data||{})) ev[k]=data[k];
+  var ev={type:'event', event:'em_'+name, variant:variant(), sid:SID, ts:new Date().toISOString(), src:(qp('utm_source')||qp('src')), camp:qp('utm_campaign'), ad:qp('utm_content'), w:window.innerWidth, lang:LANG}; for(var k in (data||{})) ev[k]=data[k];
   try{(window.dataLayer=window.dataLayer||[]).push(ev)}catch(e){}
   var url=CONFIG.eventEndpoint||CONFIG.endpoint;
   if(url){try{var b=JSON.stringify(ev); if(navigator.sendBeacon){navigator.sendBeacon(url,b)}else{fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:b,keepalive:true})}}catch(e){}}
@@ -982,7 +982,7 @@ function wire(){
     var wurl=CONFIG.waitlistEndpoint||CONFIG.endpoint;
     if(!wurl){ msg.textContent=t('wl_noconn'); return }
     msg.textContent=t('saving');
-    fetch(wurl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({type:'waitlist',email:email,variant:variant(),lang:LANG,sid:SID,ts:new Date().toISOString(),src:qp('utm_source'),camp:qp('utm_campaign'),ad:qp('utm_content')})})
+    fetch(wurl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({type:'waitlist',email:email,variant:variant(),lang:LANG,sid:SID,ts:new Date().toISOString(),src:(qp('utm_source')||qp('src')),camp:qp('utm_campaign'),ad:qp('utm_content')})})
       .then(function(){ track('waitlist_submit'); msg.textContent=t('wl_ok') })
       .catch(function(){ msg.textContent=t('wl_fail') });
   };
