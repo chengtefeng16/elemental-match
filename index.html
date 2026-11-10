@@ -276,6 +276,49 @@ footer p b{color:var(--fg)}
 @media (prefers-reduced-motion: reduce){
   *, *::before, *::after{animation:none!important; transition:none!important}
 }
+/* ===== ARENA v2: draw + duel ===== */
+.hero h1,.hero .sub{display:none}
+#arena{display:flex; flex-direction:column; gap:16px; align-items:center; text-align:center}
+#arena .a-kick{font:700 .74rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--paper)}
+#arena h2.a-h{font:400 clamp(1.9rem,8vw,3rem)/1.02 var(--font-display); text-wrap:balance; margin:0}
+#arena .a-sub{color:var(--muted); margin:0; max-width:34ch}
+.a-vs{display:grid; grid-template-columns:1fr 1fr; gap:12px; width:100%; max-width:440px; align-items:start}
+.a-vs.solo{grid-template-columns:minmax(0,230px); justify-content:center}
+.a-slot{display:flex; flex-direction:column; gap:6px; align-items:center; min-width:0}
+.a-who{font:700 .68rem var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+.xcard{perspective:900px; width:100%; aspect-ratio:3/4.2; border:0; padding:0; background:none; cursor:pointer; color:inherit; font:inherit; max-width:230px}
+.xcard.static{cursor:default}
+.xin{position:relative; width:100%; height:100%; transition:transform .7s cubic-bezier(.2,.8,.2,1); transform-style:preserve-3d}
+.xcard.up .xin{transform:rotateY(180deg)}
+.xf,.xb{position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border:3px solid var(--paper); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:10px; overflow:hidden}
+.xb{background:repeating-linear-gradient(45deg,var(--void2) 0 10px,var(--void3) 10px 20px); box-shadow:5px 5px 0 var(--seal)}
+.xb b{font:400 3.2rem/1 var(--font-han); color:var(--paper)}
+.xb span{font:700 .72rem var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--fg); background:var(--seal); padding:4px 8px}
+.xcard:not(.up):not(.static) .xb{animation:xpulse 1.6s ease-in-out infinite}
+@keyframes xpulse{50%{transform:translateY(-5px)}}
+.xf{transform:rotateY(180deg); background:var(--void2); border-color:var(--ec,var(--paper)); box-shadow:5px 5px 0 var(--ec,var(--paper))}
+.xf .x-han{font:400 clamp(4rem,22vw,6.2rem)/1 var(--font-han); color:var(--ec)}
+.xf .x-name{font:400 1.3rem var(--font-display); text-transform:uppercase}
+.xf .x-pow{font:700 1.9rem var(--font-mono)}
+.xf .x-rar{font:700 .64rem var(--font-mono); letter-spacing:.14em; text-transform:uppercase; padding:3px 8px; background:var(--ec); color:var(--ink)}
+.xf .x-true{position:absolute; top:6px; right:6px; font:700 .58rem var(--font-mono); background:var(--seal); color:var(--on-seal); padding:2px 6px; letter-spacing:.1em}
+.xcard.legend .xf{background:linear-gradient(135deg,var(--void2),var(--void3) 50%,var(--void2)); animation:shine 2.2s linear infinite}
+@keyframes shine{50%{filter:brightness(1.35)}}
+.a-vibe{min-height:2.8em; font-size:.98rem; max-width:32ch; margin:0}
+.a-actions{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; width:100%}
+.a-actions .btn{min-height:48px}
+.btn.alt{background:transparent; color:var(--paper); box-shadow:4px 4px 0 var(--line)}
+.a-coll{display:flex; gap:8px; justify-content:center}
+.a-coll i{display:flex; align-items:center; justify-content:center; width:44px; height:52px; border:2px dashed var(--line); font:400 1.5rem var(--font-han); font-style:normal; color:var(--line)}
+.a-coll i.got{border:2px solid var(--ec); color:var(--ec); background:var(--void2)}
+.a-note{font:700 .7rem var(--font-mono); letter-spacing:.08em; color:var(--muted); margin:0}
+.a-res{width:100%; max-width:440px; border:3px solid var(--paper); background:var(--void2); padding:16px; display:flex; flex-direction:column; gap:8px; box-shadow:5px 5px 0 var(--seal)}
+.a-res h3{font:400 1.7rem var(--font-display); margin:0; text-transform:uppercase}
+.a-res.win h3{color:var(--wood)} .a-res.lose h3{color:var(--fire)}
+.a-res p{margin:0}
+.a-math{font:700 .76rem var(--font-mono); color:var(--muted)}
+.a-lockh{font:400 1.5rem var(--font-display); margin:0}
+.a-locks{color:var(--muted); margin:0}
 </style>
 
 <div class="wrap">
@@ -284,8 +327,11 @@ footer p b{color:var(--fg)}
     <div class="r"><span class="st" data-i="start">Press start</span><button class="snd" id="lang" type="button" aria-label="Language / 语言"><span id="langl">中文</span></button><button class="snd" id="snd" type="button" aria-pressed="false"><i class="eq" aria-hidden="true"><b></b><b></b><b></b></i><span id="sndl">Sound off</span></button></div>
   </div>
 
+  <section id="arena" aria-live="polite"></section>
+
   <header class="hero">
     <div class="ring" id="ring" aria-hidden="true"></div>
+    <h2 class="a-lockh" id="lockh"></h2><p class="a-locks" id="locks"></p>
     <h1 id="h1"></h1>
     <p class="sub" id="sub"></p>
     <form id="f" novalidate>
@@ -1075,6 +1121,7 @@ function applyStatic(){
   $$('[data-i]').forEach(function(el){ el.textContent=t(el.getAttribute('data-i')) });
   $$('[data-ih]').forEach(function(el){ el.innerHTML=t(el.getAttribute('data-ih')) });
   $('#langl').textContent=t('lang_btn');
+  if($('#lockh')){ $('#lockh').textContent=a('lockh'); $('#locks').textContent=a('locks') }
   paintSnd();
 }
 function applyVariant(){
@@ -1088,6 +1135,156 @@ function loadSample(){
   var v=variant();
   STATE.me=calc('1992-03-18','14:00'); STATE.partner = v==='partner'?calc('1989-10-05','09:00'):null; STATE.sample=true;
 }
+/* ===== ARENA v2: 抽卡 + 对战 ===== */
+var AT={
+ en:{kick:'5-element card game', h:'Draw your element. Duel a friend.', sub:'Wood meets Fire. Chemistry or chaos? Tap a card and find out.',
+  tap:'Tap to draw', redraw:'Draw again', challenge:'Challenge a friend', lock:'Lock my true card', copied:'Link copied. Send it!', 
+  col:function(n){return 'Collection '+n+'/5'}, full:'Full set! You collected all five elements.',
+  dared:'A friend dared you', theirs:'Their card', yours:'Your card', draw_fight:'Draw your card to fight',
+  win:'You win', lose:'You lose', tie:'Draw', rematch:'Rematch', other:'Challenge someone else',
+  r_ctl_win:function(a,b){return a+' overcomes '+b+'. +15 for you.'}, r_ctl_lose:function(a,b){return b+' overcomes '+a+'. +15 for them.'},
+  r_gen_win:function(a,b){return a+' is fed by '+b+'. +8 for you.'}, r_gen_lose:function(a,b){return b+' is fed by '+a+'. +8 for them.'},
+  r_same:'Mirror match. Raw power decides.', r_none:'No clash. Raw power decides.',
+  power:'Power', rar:['Common','Rare','Epic','Legend'], soul:'Soul', truebadge:'TRUE',
+  share:function(el,p,url){return 'I drew '+el+' (power '+p+'). Beat my card: '+url},
+  lockh:'Lock your TRUE card', locks:'Your real birthday gives you one special card that never changes. Takes 10 seconds.',
+  vibes:{wood:'Always growing. Hard to stop.',fire:'Loud, bright, impossible to ignore.',earth:'Steady. Everyone leans on you.',metal:'Sharp and precise. Cuts through noise.',water:'Calm on top, deep underneath.'}},
+ zh:{kick:'五行卡牌小游戏', h:'抽一张五行牌，挑战朋友', sub:'木遇火，是化学反应还是一团乱？点一下牌就知道。',
+  tap:'点一下抽牌', redraw:'再抽一张', challenge:'挑战朋友', lock:'锁定我的本命牌', copied:'链接已复制，发给朋友！',
+  col:function(n){return '收集 '+n+'/5'}, full:'集齐了！五行全部收集完成。',
+  dared:'朋友向你发起挑战', theirs:'对方的牌', yours:'你的牌', draw_fight:'抽一张牌来迎战',
+  win:'你赢了', lose:'你输了', tie:'平局', rematch:'再战一局', other:'挑战别人',
+  r_ctl_win:function(a,b){return a+'克'+b+'，你 +15。'}, r_ctl_lose:function(a,b){return b+'克'+a+'，对方 +15。'},
+  r_gen_win:function(a,b){return b+'生'+a+'，你 +8。'}, r_gen_lose:function(a,b){return a+'生'+b+'，对方 +8。'},
+  r_same:'同属性对决，比拼原始点数。', r_none:'没有生克，比拼原始点数。',
+  power:'战力', rar:['普通','稀有','史诗','传说'], soul:'本命', truebadge:'本命',
+  share:function(el,p,url){return '我抽到了'+el+'牌（战力'+p+'），来挑战我：'+url},
+  lockh:'锁定你的本命牌', locks:'用真实生日得到一张固定不变的专属牌，只要 10 秒。',
+  vibes:{wood:'一直在生长，拦不住。',fire:'热烈明亮，没法被忽视。',earth:'稳，大家都靠你。',metal:'锋利精准，一刀切中。',water:'表面平静，深不见底。'}}
+};
+function a(k){ var v=(AT[LANG]||AT.en)[k]; if(v===undefined) v=AT.en[k]; return typeof v==='function'?v.apply(null,Array.prototype.slice.call(arguments,1)):v }
+var AR={card:null, foe:null, trueCard:null, duel:null, result:null, draws:0};
+function hashStr(s){var h=2166136261; for(var i=0;i<s.length;i++){h^=s.charCodeAt(i); h=Math.imul(h,16777619)} return h>>>0}
+function rarityIdx(p){ return p>=94?3:p>=82?2:p>=66?1:0 }
+function rollCard(){
+  var el=ORDER[Math.floor(Math.random()*5)];
+  var r=Math.random(), p = r<0.5? 40+Math.floor(Math.random()*26) : r<0.82? 66+Math.floor(Math.random()*16) : r<0.96? 82+Math.floor(Math.random()*12) : 94+Math.floor(Math.random()*6);
+  return {el:el, p:p, t:0};
+}
+function cardFromCode(c){
+  var m=/^([0-4])(\d{2})([td])$/.exec(c||''); if(!m) return null;
+  var p=parseInt(m[2],10); if(p<30||p>99) return null;
+  return {el:ORDER[+m[1]], p:p, t:m[3]==='t'?1:0};
+}
+function codeOf(c){ return ORDER.indexOf(c.el)+('0'+c.p).slice(-2)+(c.t?'t':'d') }
+function linkFor(c){ return location.origin+location.pathname+'?c='+codeOf(c)+'&src=duel' }
+function enName(k){ return E(k).name }
+function cardHtml(c, up, opts){
+  opts=opts||{};
+  var e=E(c.el), ri=c.t?3:rarityIdx(c.p), rar=c.t?a('soul'):a('rar')[ri];
+  return '<button type="button" class="xcard'+(up?' up':'')+(opts.static?' static':'')+(ri===3?' legend':'')+'" '+(opts.id?'id="'+opts.id+'" ':'')+'style="--ec:'+EL[c.el].css+'" aria-label="'+e.name+' '+c.p+'">'
+   +'<div class="xin"><div class="xb"><b lang="zh" aria-hidden="true">五行</b><span>'+a('tap')+'</span></div>'
+   +'<div class="xf">'+(c.t?'<span class="x-true">'+a('truebadge')+'</span>':'')+'<div class="x-han" lang="zh" aria-hidden="true">'+EL[c.el].han+'</div><div class="x-name">'+e.name+'</div><div class="x-pow">'+c.p+'</div><div class="x-rar">'+rar+'</div></div></div></button>';
+}
+function backHtml(id){
+  return '<button type="button" class="xcard" id="'+id+'" aria-label="'+a('tap')+'"><div class="xin"><div class="xb"><b lang="zh" aria-hidden="true">五行</b><span>'+a('tap')+'</span></div><div class="xf"></div></div></button>';
+}
+function collHtml(){
+  var got=store('em_coll_v1')||{}, n=0, h='<div class="a-coll">';
+  ORDER.forEach(function(k){ var g=!!got[k]; if(g)n++; h+='<i class="'+(g?'got':'')+'" lang="zh" style="--ec:'+EL[k].css+'">'+EL[k].han+'</i>' });
+  return h+'</div><p class="a-note">'+(n===5?a('full'):a('col',n))+'</p>';
+}
+function addColl(el){
+  var got=store('em_coll_v1')||{}; var had=Object.keys(got).length; got[el]=1; store('em_coll_v1',got);
+  return Object.keys(got).length;
+}
+function resolve(mine, foe){
+  var m=mine.p, f=foe.p, line='', ae=enName(mine.el), be=enName(foe.el);
+  if(CTL[mine.el]===foe.el){ m+=15; line=a('r_ctl_win',ae,be) }
+  else if(CTL[foe.el]===mine.el){ f+=15; line=a('r_ctl_lose',ae,be) }
+  else if(GEN[foe.el]===mine.el){ m+=8; line=a('r_gen_win',ae,be) }
+  else if(GEN[mine.el]===foe.el){ f+=8; line=a('r_gen_lose',ae,be) }
+  else if(mine.el===foe.el){ line=a('r_same') } else { line=a('r_none') }
+  var out = Math.abs(m-f)<=1?'tie':(m>f?'win':'lose');
+  return {out:out, m:m, f:f, line:line};
+}
+function arenaRender(){
+  var box=$('#arena'); if(!box) return;
+  var h='<div class="a-kick">'+a('kick')+'</div>';
+  if(AR.duel){
+    if(AR.card&&AR.result) AR.result=resolve(AR.card,AR.duel);
+    h+='<h2 class="a-h">'+a('dared')+'</h2>';
+    h+='<div class="a-vs"><div class="a-slot"><span class="a-who">'+a('theirs')+'</span>'+cardHtml(AR.duel,true,{static:true})+'</div>'
+      +'<div class="a-slot"><span class="a-who">'+a('yours')+'</span>'+(AR.card?cardHtml(AR.card,true,{static:true}):backHtml('xdraw'))+'</div></div>';
+    if(!AR.card) h+='<p class="a-sub">'+a('draw_fight')+'</p>';
+    if(AR.result){
+      var r=AR.result;
+      h+='<div class="a-res '+r.out+'"><h3>'+a(r.out)+'</h3><p>'+r.line+'</p><p class="a-math">'+a('power')+' '+r.m+' vs '+r.f+'</p></div>';
+      h+='<div class="a-actions"><button class="btn" id="xre" type="button">'+a('rematch')+'</button><button class="btn alt" id="xch" type="button">'+a('other')+'</button><button class="btn alt" id="xlk" type="button">'+a('lock')+'</button></div>';
+    }
+  } else {
+    h+='<h2 class="a-h">'+a('h')+'</h2>';
+    if(!AR.card) h+='<p class="a-sub">'+a('sub')+'</p>';
+    var shown=AR.trueCard&&AR.card&&AR.card.t?AR.card:AR.card;
+    h+='<div class="a-vs solo"><div class="a-slot">'+(shown?cardHtml(shown,true):backHtml('xdraw'))+'</div></div>';
+    if(shown) h+='<p class="a-vibe">'+a('vibes')[shown.el]+'</p>'
+      +'<div class="a-actions"><button class="btn" id="xch" type="button">'+a('challenge')+'</button><button class="btn alt" id="xre" type="button">'+a('redraw')+'</button><button class="btn alt" id="xlk" type="button">'+a('lock')+'</button></div>';
+  }
+  if(!AR.duel || AR.card) h+=collHtml();
+  box.innerHTML=h;
+  var d=$('#xdraw'); if(d) d.onclick=function(){ doDraw(false) };
+  var re=$('#xre'); if(re) re.onclick=function(){ doDraw(true) };
+  var ch=$('#xch'); if(ch) ch.onclick=function(){ doChallenge(ch) };
+  var lk=$('#xlk'); if(lk) lk.onclick=function(){ track('lock_click'); var f=$('#f'); if(f){ f.scrollIntoView({behavior:'smooth',block:'start'}); setTimeout(function(){try{$('#d1').focus({preventScroll:true})}catch(e){}},500) } };
+}
+function doDraw(again){
+  var c=rollCard(); AR.draws++; AR.card=c; AR.result=null;
+  var n=addColl(c.el);
+  track('draw',{el:c.el,p:c.p,n:AR.draws,again:again?1:0,duel:AR.duel?1:0});
+  try{ if(sndReady()) sfx.tick() }catch(e){}
+  var first=!document.getElementById('xdraw') && !again;
+  // animate flip: render face-down first when coming from back, else just re-render
+  var btn=$('#xdraw');
+  function finish(){
+    if(AR.duel){
+      AR.result=resolve(c,AR.duel); track('battle_done',{out:AR.result.out,mine:c.el,theirs:AR.duel.el,rematch:again?1:0});
+      if(again) track('rematch');
+    }
+    arenaRender();
+    try{ if(sndReady()){ if(AR.result&&AR.result.out==='win') sfx.pact(); else sfx.knock() } }catch(e){}
+  }
+  if(btn){
+    btn.outerHTML=cardHtml(c,false,{id:'xdraw'});
+    var nb=$('#xdraw'); nb.disabled=true;
+    setTimeout(function(){ nb.classList.add('up') },40);
+    setTimeout(finish,780);
+  } else { AR.card=null; arenaRender(); var b2=$('#xdraw'); if(b2){ b2.outerHTML=cardHtml(c,false,{id:'xdraw'}); var nb2=$('#xdraw'); setTimeout(function(){nb2.classList.add('up')},40); setTimeout(function(){AR.card=c; finish()},780) } else { AR.card=c; finish() } }
+}
+function doChallenge(btn){
+  var c=AR.card;
+  if(!c){ var d=$('#xdraw'); if(d) d.click(); return }
+  var url=linkFor(c), msg=a('share',enName(c.el),c.p,url);
+  track('challenge_create',{el:c.el,p:c.p});
+  var label=btn.textContent;
+  function ok(){ btn.textContent=a('copied'); setTimeout(function(){btn.textContent=label},2200) }
+  function fb(){ try{ var ta=document.createElement('textarea'); ta.value=msg; ta.readOnly=true; ta.style.cssText='position:fixed;opacity:0;top:0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); ok() }catch(e){} }
+  if(navigator.share){ navigator.share({text:msg}).then(ok).catch(function(e){ if(e&&e.name==='AbortError') return; fb() }) }
+  else if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(msg).then(ok,fb) } else fb();
+}
+function arenaLock(){
+  var me=STATE.me; if(!me||!me.dmEl) return;
+  var el=me.dmEl, seed=hashStr(me.stems.join('')+me.branches.join('')+el);
+  var c={el:el,p:88+(seed%12),t:1};
+  AR.trueCard=c; AR.card=c; AR.result=null; addColl(el);
+  if(AR.duel){ AR.result=resolve(c,AR.duel) }
+  arenaRender();
+  var a1=$('#arena'); if(a1) a1.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function arenaInit(){
+  var c=cardFromCode(qp('c')); if(c){ AR.duel=c; track('challenge_open',{el:c.el,p:c.p}) }
+  arenaRender();
+}
+
 var started=false;
 $('#f').addEventListener('input',function(){ if(!started){started=true; track('form_start')} });
 $('#f').addEventListener('submit',function(e){
@@ -1102,6 +1299,7 @@ $('#f').addEventListener('submit',function(e){
   STATE.me=calc(d1,$('#t1').value);
   STATE.partner=(variant()==='partner'&&d2)?calc(d2,$('#t2').value):null;
   STATE.sample=false; track('calc',{has_partner:!!STATE.partner, has_time:STATE.me.known});
+  try{arenaLock()}catch(e){}
   render();
   sfx.reveal(STATE.me);
   var first=$('#out').firstElementChild; if(first){ first.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth', block:'start'}) }
@@ -1113,9 +1311,9 @@ window.addEventListener('hashchange',function(){ applyVariant(); if(STATE.sample
   $('#ring').innerHTML=bagua();
   sndInitUi();
   $('#lang').addEventListener('click',function(){
-    LANG=(LANG==='zh'?'en':'zh'); store('em_lang_v1',LANG); applyStatic(); applyVariant(); render(); track('lang_toggle');
+    LANG=(LANG==='zh'?'en':'zh'); store('em_lang_v1',LANG); applyStatic(); applyVariant(); render(); arenaRender(); track('lang_toggle');
   });
-  applyStatic(); applyVariant();
+  applyStatic(); applyVariant(); arenaInit();
   if(typeof Solar==='undefined'){ $('#out').innerHTML='<p class="err">'+t('err_engine')+'</p>'; return }
   loadSample(); render(); track('view');
 })();
